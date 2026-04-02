@@ -1,0 +1,3416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BURWINKEL 2K</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --red: #cc0000;
+  --red-dark: #8b0000;
+  --red-bright: #ff3333;
+  --gold: #f7c530;
+  --gold-dim: #b89020;
+  --bg: #060810;
+  --bg2: #0c0f1a;
+  --scoreboard: #07090f;
+  --field: #2b7338;
+  --field2: #27683333;
+  --blue: #3a6fcc;
+  --blue-dim: #1e3a7a;
+  --white: #f2f2f5;
+  --gray: #7a7a8a;
+  --gray-light: #aaaabd;
+  --green: #00c853;
+  --orange: #ff6b00;
+  --hud-border: rgba(247,197,48,0.18);
+  --card-bg: #0c1020;
+}
+
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: 'Rajdhani', sans-serif;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ===========================
+   TITLE SCREEN
+   =========================== */
+#title {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 80%, rgba(44,115,56,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 50% at 30% 20%, rgba(200,0,0,0.12) 0%, transparent 60%),
+    linear-gradient(175deg, #04060d 0%, #080c18 60%, #060408 100%);
+  z-index: 1000;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.t-scanlines {
+  position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.25) 2px,rgba(0,0,0,0.25) 4px);
+}
+
+.t-stars { position: absolute; inset: 0; pointer-events: none; }
+.t-star {
+  position: absolute;
+  border-radius: 50%;
+  background: white;
+  animation: twinkle 3s ease-in-out infinite;
+}
+@keyframes twinkle { 0%,100%{opacity:0.2;} 50%{opacity:0.7;} }
+
+.t-field-glow {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 35%;
+  background: linear-gradient(0deg, rgba(40,100,50,0.35) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.t-logo { position: relative; z-index: 1; text-align: center; }
+
+.t-eyebrow {
+  font-family: 'Oswald', sans-serif;
+  font-size: 13px; letter-spacing: 8px;
+  color: var(--gold); margin-bottom: 8px;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.t-main {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(72px, 16vw, 160px);
+  line-height: 0.88;
+  background: linear-gradient(140deg, #ff6633 0%, #cc0000 45%, #ff2200 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 50px rgba(220,50,0,0.55));
+}
+
+.t-year {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(44px, 9vw, 90px);
+  color: var(--gold); line-height: 1; letter-spacing: 6px;
+  filter: drop-shadow(0 0 24px rgba(247,197,48,0.6));
+}
+
+.t-sub {
+  font-family: 'Oswald', sans-serif;
+  font-size: 15px; letter-spacing: 5px;
+  color: var(--gray-light); margin-top: 6px;
+}
+
+.t-wildcat {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px; letter-spacing: 8px;
+  color: var(--red); margin-top: 2px;
+}
+
+.t-ratings {
+  display: flex; gap: 12px; justify-content: center;
+  margin-top: 28px; flex-wrap: wrap;
+}
+.t-badge {
+  background: var(--gold); color: #000;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700; font-size: 12px;
+  padding: 5px 12px; letter-spacing: 1px;
+  clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%);
+}
+
+.t-press {
+  margin-top: 48px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 20px; letter-spacing: 5px;
+  color: var(--white);
+  animation: blink 1.3s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.15;} }
+
+.t-keys {
+  margin-top: 14px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px; color: var(--gray);
+  letter-spacing: 2px;
+}
+
+/* ===========================
+   GAME SCREEN
+   =========================== */
+#game {
+  display: none; flex-direction: column;
+  height: 100vh;
+}
+
+/* --- SCOREBOARD HUD --- */
+#hud {
+  background: var(--scoreboard);
+  border-bottom: 1px solid var(--hud-border);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto;
+  align-items: stretch;
+  height: 54px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 20;
+}
+
+.hud-team {
+  display: flex; align-items: center;
+  padding: 0 14px; gap: 10px;
+}
+.hud-team.home { justify-content: flex-end; }
+.hud-team.away { justify-content: flex-start; }
+
+.hud-name {
+  font-family: 'Oswald', sans-serif;
+  font-size: 13px; font-weight: 700;
+  letter-spacing: 2.5px; text-transform: uppercase;
+}
+.hud-name.wc { color: var(--red); }
+.hud-name.alg { color: var(--blue); }
+
+.hud-score {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px; line-height: 1;
+  min-width: 38px; text-align: center;
+}
+
+.hud-center {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 0 16px;
+  border-left: 1px solid var(--hud-border);
+  border-right: 1px solid var(--hud-border);
+  gap: 2px;
+  min-width: 130px;
+}
+
+.hud-playnum {
+  font-family: 'Oswald', sans-serif;
+  font-size: 10px; letter-spacing: 2px;
+  color: var(--gold); text-transform: uppercase;
+}
+
+.hud-clock {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px; line-height: 1;
+  transition: color 0.3s;
+}
+.hud-clock.ok { color: var(--white); }
+.hud-clock.warn { color: var(--gold); }
+.hud-clock.danger { color: #ff4422; animation: pulse 0.45s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+
+.hud-dd {
+  background: var(--red);
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 2px; color: white;
+  padding: 1px 10px; white-space: nowrap;
+}
+
+/* --- FIELD SVG --- */
+#field-wrap {
+  flex: 0 0 130px;
+  background: #0a0c14;
+  border-bottom: 1px solid var(--hud-border);
+  position: relative;
+  overflow: hidden;
+}
+
+#field-svg {
+  width: 100%; height: 100%;
+  display: block;
+}
+
+/* --- MAIN PLAY AREA --- */
+#play-area {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 12px 16px 8px;
+  gap: 12px;
+  background: linear-gradient(180deg, #060810 0%, #0a0c16 100%);
+  overflow: hidden;
+  position: relative;
+}
+
+.pa-situation {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(11px, 1.6vw, 15px); letter-spacing: 5px;
+  color: #aaaacc; text-transform: uppercase;
+}
+
+#eq-card {
+  background: #010204;
+  border: 1px solid rgba(247,197,48,0.35);
+  border-top: 4px solid var(--gold);
+  padding: 22px 36px;
+  text-align: center;
+  width: min(700px, 95vw);
+  position: relative;
+  box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 60px rgba(0,0,0,0.4);
+}
+
+.eq-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px; letter-spacing: 5px;
+  color: var(--gold); margin-bottom: 10px;
+  text-transform: uppercase; opacity: 0.85;
+}
+
+#eq-display {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(42px, 8.5vw, 86px);
+  font-weight: 700; color: #ffffff;
+  letter-spacing: 2px; line-height: 1.15;
+  text-shadow: 0 0 30px rgba(255,255,255,0.12);
+}
+#eq-display sup {
+  font-size: 0.55em; vertical-align: super;
+  line-height: 0;
+}
+
+.pa-call-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(11px, 1.5vw, 14px); letter-spacing: 4px;
+  color: #aaaacc; text-transform: uppercase;
+}
+
+/* --- PLAY CALL BUTTONS --- */
+#plays {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: min(680px, 95vw);
+}
+
+.play-btn {
+  background: #05080f;
+  border: 2px solid rgba(247,197,48,0.35);
+  border-left: 5px solid var(--gold);
+  color: var(--white);
+  padding: 16px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.12s ease, border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 0 rgba(247,197,48,0);
+}
+.play-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 50%);
+}
+.play-btn:hover:not(:disabled) {
+  background: #0c1428;
+  border-color: var(--red);
+  border-left-color: var(--red);
+  box-shadow: 0 0 18px rgba(204,0,0,0.22), inset 0 0 12px rgba(204,0,0,0.06);
+  transform: translateY(-3px);
+}
+.play-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.pb-hotkey {
+  position: absolute; top: 7px; right: 10px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px; color: rgba(247,197,48,0.22);
+}
+.pb-type {
+  font-family: 'Oswald', sans-serif;
+  font-size: 10px; letter-spacing: 3px;
+  color: var(--gold); margin-bottom: 5px;
+  text-transform: uppercase;
+}
+.pb-name {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(17px, 2.6vw, 24px); font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  line-height: 1.1; color: #ffffff;
+}
+.pb-desc {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(12px, 1.6vw, 15px); color: #8888aa;
+  margin-top: 5px; font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.play-btn.flash-correct {
+  border-color: var(--green) !important;
+  animation: fcorrect 0.7s ease forwards;
+}
+.play-btn.flash-wrong {
+  border-color: #dd3333 !important;
+  animation: fwrong 0.7s ease forwards;
+}
+.play-btn.reveal-correct {
+  border-color: var(--green) !important;
+  background: linear-gradient(155deg, #0a2a18 0%, #0c2015 100%) !important;
+}
+
+@keyframes fcorrect {
+  0% { background: rgba(0,200,83,0.28); }
+  100% { background: linear-gradient(155deg, #0a2a18 0%, #0c2015 100%); }
+}
+@keyframes fwrong {
+  0% { background: rgba(220,50,50,0.28); }
+  100% { background: linear-gradient(155deg, #2a0a0a 0%, #200c0c 100%); }
+}
+
+/* --- STEEL GATE OVERLAY --- */
+#gate {
+  position: absolute; inset: 0; z-index: 10;
+  display: flex; pointer-events: none;
+  overflow: hidden;
+}
+#gate.open { pointer-events: none; }
+
+.gate-panel {
+  flex: 1; height: 100%;
+  background:
+    repeating-linear-gradient(
+      0deg, transparent 0px, transparent 22px,
+      rgba(255,255,255,0.022) 22px, rgba(255,255,255,0.022) 24px
+    ),
+    repeating-linear-gradient(
+      90deg, transparent 0px, transparent 36px,
+      rgba(255,255,255,0.015) 36px, rgba(255,255,255,0.015) 38px
+    ),
+    linear-gradient(160deg, #0c1020 0%, #060810 100%);
+  border: 1px solid rgba(247,197,48,0.18);
+  /* no default transition — only animates when .animating is present */
+  will-change: transform;
+}
+#gate.animating .gate-panel {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.gate-left  { transform: translateX(0); border-right: 2px solid rgba(247,197,48,0.5); }
+.gate-right { transform: translateX(0); border-left:  2px solid rgba(247,197,48,0.5); }
+.gate-seam {
+  position: absolute; left: 50%; top: 0; bottom: 0;
+  width: 3px; margin-left: -1.5px;
+  background: var(--gold); opacity: 0.7;
+  transition: opacity 0.15s;
+  box-shadow: 0 0 10px rgba(247,197,48,0.6);
+}
+#gate.open .gate-left  { transform: translateX(-100%); }
+#gate.open .gate-right { transform: translateX(100%); }
+#gate.open .gate-seam  { opacity: 0; }
+
+/* --- GROUPING QUESTION — card select redesign --- */
+#group-eqs {
+  display: none; gap: 10px; width: min(700px, 95vw);
+  justify-content: center;
+}
+#group-eqs.active { display: flex; }
+
+.geq-card {
+  flex: 1; min-width: 0;
+  background: #010204;
+  border: 2px solid rgba(247,197,48,0.22);
+  border-top: 4px solid var(--gold-dim);
+  padding: 14px 8px 0; text-align: center;
+  box-shadow: 0 0 20px rgba(0,0,0,0.7);
+  cursor: pointer;
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+  overflow: hidden;
+  user-select: none;
+}
+.geq-card:hover:not(.locked) {
+  border-color: rgba(247,197,48,0.55);
+  box-shadow: 0 0 24px rgba(0,0,0,0.8), 0 0 12px rgba(247,197,48,0.1);
+}
+.geq-card.selected {
+  border-color: var(--gold) !important;
+  border-top-color: var(--gold) !important;
+  background: #0a0c04 !important;
+  box-shadow: 0 0 28px rgba(0,0,0,0.8), 0 0 20px rgba(247,197,48,0.2) !important;
+}
+.geq-card.locked { cursor: default; }
+.geq-card.reveal-correct {
+  border-color: var(--green) !important;
+  background: #010a04 !important;
+  box-shadow: 0 0 20px rgba(0,200,83,0.2) !important;
+}
+.geq-card.reveal-wrong {
+  border-color: #dd3333 !important;
+  background: #0a0101 !important;
+}
+.geq-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px; color: var(--gold);
+  line-height: 1; margin-bottom: 6px;
+}
+.geq-eq {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(14px, 3vw, 28px);
+  font-weight: 700; color: #ffffff;
+  line-height: 1.3; padding: 0 4px;
+  text-shadow: 0 0 20px rgba(255,255,255,0.1);
+}
+.geq-eq sup { font-size: 0.6em; vertical-align: super; line-height: 0; }
+
+/* pulsing tap instruction strip above equation cards */
+#group-tap-cue {
+  display: none; align-items: center; justify-content: center;
+  gap: 10px; width: min(700px, 95vw);
+  padding: 7px 12px;
+  background: rgba(247,197,48,0.07);
+  border: 1px solid rgba(247,197,48,0.22);
+}
+#group-eqs.active ~ #group-tap-cue,
+#group-tap-cue.active { display: flex; }
+
+.tap-cue-icon {
+  font-size: 18px;
+  animation: tapBounce 1.1s ease-in-out infinite;
+}
+@keyframes tapBounce {
+  0%,100% { transform: translateY(0); }
+  45%     { transform: translateY(-4px); }
+}
+.tap-cue-text {
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px; letter-spacing: 3px;
+  color: var(--gold); text-transform: uppercase;
+  animation: tapPulse 1.8s ease-in-out infinite;
+}
+@keyframes tapPulse {
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0.45; }
+}
+
+.geq-select-zone {
+  margin-top: 10px;
+  background: rgba(247,197,48,0.10);
+  border-top: 2px solid rgba(247,197,48,0.28);
+  padding: 10px 6px;
+  transition: background 0.18s, border-color 0.18s;
+  position: relative;
+}
+/* pulsing outline on idle (not yet selected) cards */
+.geq-card:not(.selected):not(.locked) .geq-select-zone {
+  animation: zonePulse 1.8s ease-in-out infinite;
+}
+@keyframes zonePulse {
+  0%,100% { border-top-color: rgba(247,197,48,0.28); background: rgba(247,197,48,0.10); }
+  50%     { border-top-color: rgba(247,197,48,0.55); background: rgba(247,197,48,0.18); }
+}
+.geq-card.selected .geq-select-zone {
+  background: rgba(247,197,48,0.22);
+  border-top-color: var(--gold);
+  animation: none;
+}
+.geq-check {
+  font-family: 'Oswald', sans-serif;
+  font-size: 13px; letter-spacing: 3px;
+  color: rgba(247,197,48,0.6);
+  transition: color 0.18s;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.geq-check::before {
+  content: '👆';
+  font-size: 14px;
+  transition: opacity 0.18s;
+}
+.geq-card.selected .geq-check { color: var(--gold); }
+.geq-card.selected .geq-check::before { content: '✓'; font-size: 15px; }
+
+/* group submit row — hint text only, always visible during grouping */
+#group-submit-row {
+  display: none; flex-direction: column;
+  align-items: center; gap: 6px;
+  width: min(700px, 95vw);
+}
+#group-submit-row.active { display: flex; }
+#group-hint {
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px; letter-spacing: 3px;
+  color: var(--gray); text-transform: uppercase;
+  transition: color 0.2s;
+}
+#group-hint.ready { color: var(--gold); }
+
+/* confirm popup — hidden until 2 cards selected, then pops in */
+#group-confirm-popup {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
+  width: min(700px, 95vw);
+  /* hidden by default */
+  opacity: 0;
+  transform: scale(0.7) translateY(12px);
+  pointer-events: none;
+  transition: opacity 0s, transform 0s;
+}
+#group-confirm-popup.popped {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+  transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+}
+#group-confirm-popup.hidden-after {
+  opacity: 0;
+  transform: scale(0.85) translateY(6px);
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+#group-confirm-btn {
+  background: linear-gradient(135deg, #1f1800, #140e00);
+  border: 3px solid var(--gold);
+  border-bottom: 5px solid var(--gold-dim);
+  color: var(--gold);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(22px, 4vw, 38px);
+  letter-spacing: 6px; padding: 14px 52px;
+  cursor: pointer; text-transform: uppercase;
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+  box-shadow: 0 6px 32px rgba(247,197,48,0.22), inset 0 0 20px rgba(247,197,48,0.06);
+  animation: confirmPulse 1.6s ease-in-out infinite;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+@keyframes confirmPulse {
+  0%,100% { box-shadow: 0 6px 32px rgba(247,197,48,0.22), inset 0 0 20px rgba(247,197,48,0.06); }
+  50%     { box-shadow: 0 8px 44px rgba(247,197,48,0.42), inset 0 0 28px rgba(247,197,48,0.12); }
+}
+#group-confirm-btn:hover {
+  background: linear-gradient(135deg, #2e2400, #1e1600);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 50px rgba(247,197,48,0.38), inset 0 0 28px rgba(247,197,48,0.1);
+  animation: none;
+}
+#group-confirm-btn:active { transform: translateY(1px); }
+
+#group-confirm-sub {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px; font-weight: 600;
+  color: rgba(247,197,48,0.45);
+  letter-spacing: 1px;
+  display: flex; align-items: center; gap: 6px;
+}
+.space-key-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(247,197,48,0.10);
+  border: 1px solid rgba(247,197,48,0.35);
+  border-bottom: 3px solid rgba(247,197,48,0.35);
+  border-radius: 4px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 10px; letter-spacing: 2px;
+  padding: 3px 10px; color: var(--gold);
+}
+
+/* --- PROGRESS / CLOCK BARS --- */
+.bar-wrap {
+  width: min(580px, 96vw); height: 3px;
+  background: rgba(255,255,255,0.06); overflow: hidden;
+}
+#prog-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--red), var(--gold));
+  transition: width 0.35s ease;
+  width: 10%;
+}
+#clock-fill {
+  height: 100%;
+  background: var(--green);
+  transition: width 1s linear, background 0.4s;
+  width: 100%;
+}
+
+#play-count {
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px; letter-spacing: 3px;
+  color: var(--gray); text-align: center;
+}
+
+/* --- COMMENTARY TICKER --- */
+#ticker {
+  background: rgba(3,4,10,0.95);
+  border-top: 1px solid var(--hud-border);
+  padding: 6px 14px;
+  display: flex; align-items: center;
+  gap: 10px; flex-shrink: 0; min-height: 34px;
+}
+.tick-tag {
+  font-family: 'Oswald', sans-serif;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 2px; background: var(--gold);
+  color: #000; padding: 2px 8px; white-space: nowrap;
+  flex-shrink: 0;
+}
+#tick-text {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px; color: var(--gray-light);
+  font-style: italic;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ===========================
+   RESULT OVERLAY
+   =========================== */
+#result-overlay {
+  position: fixed; inset: 0;
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 220; pointer-events: none;
+  background: rgba(0,0,0,0.55);
+}
+#result-overlay.show { display: flex; }
+
+#result-banner {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(52px, 11vw, 110px);
+  line-height: 0.92; text-align: center;
+  padding: 18px 40px;
+  animation: rPop 0.38s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+#result-sub {
+  font-family: 'Oswald', sans-serif;
+  font-size: 17px; letter-spacing: 3px;
+  text-align: center; margin-top: 10px;
+  color: var(--gray-light);
+  animation: rPop 0.38s 0.06s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+@keyframes rPop {
+  0% { transform: scale(0.4) translateY(20px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.rb-firstdown { color: var(--gold); background: rgba(0,0,0,0.88); border: 3px solid var(--gold); }
+.rb-td { color: var(--red-bright); background: rgba(0,0,0,0.92); border: 3px solid var(--red); animation: rPop 0.38s cubic-bezier(0.34,1.56,0.64,1) both, tdPulse 0.5s 0.38s ease infinite; }
+.rb-wrong { color: #dd4444; background: rgba(0,0,0,0.85); border: 3px solid #cc2222; }
+.rb-turnover { color: var(--blue); background: rgba(0,0,0,0.88); border: 3px solid var(--blue); }
+.rb-delay { color: var(--orange); background: rgba(0,0,0,0.85); border: 3px solid var(--orange); }
+
+@keyframes tdPulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.04);} }
+
+/* ===========================
+   GAME OVER SCREEN
+   =========================== */
+#gameover {
+  position: fixed; inset: 0;
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 200; gap: 18px;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 80%, rgba(44,115,56,0.12) 0%, transparent 70%),
+    linear-gradient(160deg, #050810 0%, #080c16 100%);
+  overflow: hidden;
+}
+
+.go-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(42px, 8vw, 68px);
+  color: var(--gold); letter-spacing: 5px;
+}
+
+.go-scoreboard {
+  display: flex; align-items: center; gap: 24px;
+  background: var(--scoreboard);
+  border: 1px solid var(--hud-border);
+  padding: 20px 36px;
+}
+.go-team { text-align: center; }
+.go-tname {
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px; letter-spacing: 3px;
+  color: var(--gray); margin-bottom: 2px;
+}
+.go-tscore {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 68px; line-height: 1;
+}
+.go-tscore.wc { color: var(--red); }
+.go-tscore.alg { color: var(--blue); }
+.go-div {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px; color: var(--gray); opacity: 0.4;
+}
+
+.go-result {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(28px, 5vw, 44px);
+  letter-spacing: 4px; text-align: center;
+}
+.go-result.win { color: var(--green); }
+.go-result.loss { color: #dd4444; }
+.go-result.tie { color: var(--gold); }
+
+.go-stats {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 15px; color: var(--gray-light);
+  text-align: center; letter-spacing: 1px;
+}
+
+.go-joke {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px; font-style: italic;
+  color: var(--gray); text-align: center;
+  max-width: 400px; padding: 0 20px;
+}
+
+.go-btn {
+  background: var(--red); color: white; border: none;
+  font-family: 'Oswald', sans-serif;
+  font-size: 17px; letter-spacing: 3px;
+  padding: 12px 36px; cursor: pointer;
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+  transition: background 0.2s;
+}
+.go-btn:hover { background: #ff2222; }
+
+/* ===========================
+   CONFETTI
+   =========================== */
+.conf {
+  position: fixed; pointer-events: none; z-index: 90;
+  animation: confFall linear forwards;
+}
+@keyframes confFall {
+  0% { transform: translateY(-30px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(105vh) rotate(900deg); opacity: 0; }
+}
+
+/* ===========================
+   SOUND MIXER
+   =========================== */
+#snd-btn {
+  background: none; border: none; cursor: pointer;
+  color: rgba(255,255,255,0.35); font-size: 17px;
+  padding: 0 12px; flex-shrink: 0;
+  transition: color 0.2s; line-height: 1;
+  align-self: stretch; display: flex; align-items: center;
+  border-left: 1px solid var(--hud-border);
+}
+#snd-btn:hover { color: var(--gold); }
+#snd-btn.active { color: var(--gold); }
+
+#snd-panel {
+  position: fixed; top: 56px; right: 0;
+  background: #08091a;
+  border: 1px solid var(--hud-border);
+  border-top: 2px solid var(--gold);
+  padding: 12px 16px;
+  z-index: 300; min-width: 200px;
+  display: none; flex-direction: column; gap: 10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+}
+#snd-panel.open { display: flex; }
+
+.snd-panel-hdr {
+  font-family: 'Oswald', sans-serif;
+  font-size: 10px; letter-spacing: 3px;
+  color: var(--gold); margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+.snd-row {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 10px;
+}
+.snd-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px; font-weight: 600;
+  letter-spacing: 1px; color: var(--gray-light);
+}
+.snd-icon { font-size: 14px; margin-right: 4px; opacity: 0.75; }
+
+/* pill toggle */
+.snd-toggle { position: relative; width: 46px; height: 24px; flex-shrink: 0; }
+.snd-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.snd-slider {
+  position: absolute; inset: 0;
+  background: #2a2a3c; border-radius: 24px;
+  cursor: pointer; transition: background 0.25s;
+}
+.snd-slider::before {
+  content: '';
+  position: absolute; width: 18px; height: 18px;
+  left: 3px; top: 3px;
+  background: #666; border-radius: 50%;
+  transition: transform 0.22s, background 0.22s;
+}
+.snd-toggle input:checked + .snd-slider { background: #0d3320; }
+.snd-toggle input:checked + .snd-slider::before {
+  transform: translateX(22px);
+  background: var(--green);
+}
+
+/* --- volume slider in mixer panel --- */
+.snd-vol-row {
+  display: flex; flex-direction: column; gap: 5px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 10px; margin-top: 2px;
+}
+.snd-vol-label {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.snd-vol-label span:first-child {
+  font-family: 'Rajdhani', sans-serif; font-size: 14px;
+  font-weight: 600; letter-spacing: 1px; color: var(--gray-light);
+}
+.vol-pct {
+  font-family: 'Bebas Neue', sans-serif; font-size: 18px;
+  color: var(--gold); min-width: 42px; text-align: right;
+}
+#vol-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 4px;
+  background: linear-gradient(90deg, var(--gold) 35%, #2a2a3c 35%);
+  border-radius: 2px; outline: none; cursor: pointer;
+}
+#vol-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--gold); border: 2px solid #000;
+  cursor: pointer; transition: transform 0.1s;
+}
+#vol-slider::-webkit-slider-thumb:hover { transform: scale(1.25); }
+#vol-slider::-moz-range-thumb {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--gold); border: 2px solid #000; cursor: pointer;
+}
+
+/* --- quarter badge in HUD center --- */
+#hud-quarter {
+  font-family: 'Oswald', sans-serif;
+  font-size: 9px; letter-spacing: 3px;
+  color: var(--gray); text-transform: uppercase;
+}
+
+/* --- grouping question layout --- */
+#group-eqs {
+  display: none; gap: 10px; width: min(700px, 95vw);
+  justify-content: center;
+}
+#group-eqs.active { display: flex; }
+
+.geq-card {
+  flex: 1; min-width: 0;
+  background: #010204;
+  border: 1px solid rgba(247,197,48,0.25);
+  border-top: 4px solid var(--gold-dim);
+  padding: 14px 8px; text-align: center;
+  box-shadow: 0 0 20px rgba(0,0,0,0.7);
+}
+.geq-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px; color: var(--gold);
+  line-height: 1; margin-bottom: 6px;
+}
+.geq-eq {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(14px, 3vw, 28px);
+  font-weight: 700; color: #ffffff;
+  line-height: 1.3;
+  text-shadow: 0 0 20px rgba(255,255,255,0.1);
+}
+.geq-eq sup { font-size: 0.6em; vertical-align: super; line-height: 0; }
+
+#group-plays {
+  display: none; gap: 10px; width: min(700px, 95vw);
+  justify-content: center;
+}
+#group-plays.active { display: flex; }
+
+.grp-btn {
+  flex: 1;
+  background: linear-gradient(155deg, #0e1520, #0a1018);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-left: 4px solid var(--gold-dim);
+  color: var(--white); cursor: pointer;
+  padding: 14px 10px; text-align: left;
+  transition: transform 0.12s, border-left-color 0.15s, background 0.15s;
+}
+.grp-btn:hover:not(:disabled) {
+  border-left-color: var(--red); transform: translateY(-2px);
+  background: linear-gradient(155deg, #18264a, #141e38);
+}
+.grp-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.grp-btn-hotkey {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 11px; color: rgba(255,255,255,0.25);
+  letter-spacing: 1px; margin-bottom: 3px;
+}
+.grp-btn-name {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(15px, 2.2vw, 20px); font-weight: 700;
+  letter-spacing: 0.5px; color: #ffffff;
+}
+.grp-btn-sub {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(11px, 1.4vw, 14px); color: #9090b0;
+  margin-top: 3px; font-weight: 600;
+}
+.grp-btn.flash-correct { border-left-color: var(--green) !important;
+  animation: fcorrect 0.7s ease forwards; }
+.grp-btn.flash-wrong   { border-left-color: #dd3333 !important;
+  animation: fwrong 0.7s ease forwards; }
+.grp-btn.reveal-correct { border-left-color: var(--green) !important;
+  background: linear-gradient(155deg, #0a2a18, #0c2015) !important; }
+
+/* --- quarter transition overlay --- */
+#qtr-screen {
+  position: fixed; inset: 0;
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 480; gap: 10px; overflow: hidden;
+  background: #020408;
+}
+#qtr-screen.show { display: flex; }
+#qtr-screen .qs-scanlines {
+  position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.22) 3px,rgba(0,0,0,0.22) 6px);
+}
+.qs-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(200,0,0,0.08) 0%, transparent 70%);
+}
+.qs-end {
+  font-family: 'Oswald', sans-serif; font-size: clamp(11px, 2vw, 16px);
+  letter-spacing: 8px; color: var(--gray); text-transform: uppercase;
+  z-index: 1; animation: koFadeIn 0.4s ease both;
+}
+.qs-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(80px, 18vw, 180px); line-height: 0.85;
+  color: #ffffff; z-index: 1;
+  animation: koSlam 0.42s 0.1s cubic-bezier(0.22,0.61,0.36,1) both;
+  text-shadow: 0 0 80px rgba(255,255,255,0.1);
+  letter-spacing: 4px;
+}
+.qs-bar {
+  width: min(300px, 70vw); height: 3px;
+  background: var(--gold); z-index: 1; margin: 4px 0;
+  animation: koFadeIn 0.4s 0.28s ease both;
+}
+.qs-mode {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(22px, 4vw, 42px); letter-spacing: 4px;
+  z-index: 1; text-align: center;
+  animation: koFadeIn 0.4s 0.32s ease both;
+}
+.qs-desc {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(13px, 2vw, 18px); color: var(--gray-light);
+  letter-spacing: 1px; text-align: center;
+  max-width: min(500px, 88vw); z-index: 1;
+  animation: koFadeIn 0.4s 0.44s ease both;
+}
+.qs-progress {
+  display: flex; gap: 8px; z-index: 1; margin-top: 6px;
+  animation: koFadeIn 0.4s 0.52s ease both;
+}
+.qs-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  transition: background 0.3s;
+}
+.qs-dot.done { background: var(--gold); }
+.qs-dot.active { background: var(--red); box-shadow: 0 0 8px var(--red); }
+
+/* --- halftime overlay (expanded stats version) --- */
+#halftime {
+  position: fixed; inset: 0;
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 400; gap: 10px; overflow: hidden;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 60%, rgba(44,115,56,0.18) 0%, transparent 65%),
+    linear-gradient(160deg, #03050a 0%, #07090e 100%);
+}
+#halftime.show { display: flex; }
+.ht-scanlines {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background: repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.18) 3px,rgba(0,0,0,0.18) 6px);
+}
+.ht-eyebrow {
+  font-family: 'Oswald', sans-serif; font-size: clamp(10px, 1.5vw, 13px); letter-spacing: 8px;
+  color: var(--gold); z-index: 1; text-transform: uppercase;
+}
+.ht-main {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(52px, 11vw, 110px); z-index: 1;
+  background: linear-gradient(135deg, #ffffff 30%, #f7c530 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 0.9; text-align: center;
+  filter: drop-shadow(0 0 40px rgba(247,197,48,0.25));
+}
+.ht-sub {
+  font-family: 'Oswald', sans-serif; font-size: clamp(11px, 1.8vw, 15px); letter-spacing: 5px;
+  color: var(--gray-light); text-align: center; z-index: 1;
+}
+.ht-score {
+  display: flex; align-items: center; gap: 20px;
+  background: var(--scoreboard); border: 1px solid var(--hud-border);
+  padding: 12px 28px; z-index: 1;
+}
+.ht-team { text-align: center; }
+.ht-tname { font-family: 'Oswald', sans-serif; font-size: 11px;
+  letter-spacing: 3px; color: var(--gray); margin-bottom: 2px; }
+.ht-tscore { font-family: 'Bebas Neue', sans-serif; font-size: 52px; line-height: 1; }
+.ht-tscore.wc { color: var(--red); }
+.ht-tscore.alg { color: var(--blue); }
+.ht-div { font-family: 'Bebas Neue', sans-serif; font-size: 28px;
+  color: var(--gray); opacity: 0.4; }
+
+/* halftime stats card */
+.ht-stats-wrap {
+  display: flex; gap: 10px; z-index: 1;
+  flex-wrap: wrap; justify-content: center;
+}
+.ht-stat-box {
+  background: #0a0c16; border: 1px solid rgba(255,255,255,0.08);
+  border-top: 3px solid var(--gold-dim);
+  padding: 10px 18px; text-align: center; min-width: 100px;
+}
+.ht-stat-num {
+  font-family: 'Bebas Neue', sans-serif; font-size: 36px; line-height: 1;
+}
+.ht-stat-num.good { color: var(--green); }
+.ht-stat-num.ok   { color: var(--gold); }
+.ht-stat-num.bad  { color: #dd4444; }
+.ht-stat-label {
+  font-family: 'Oswald', sans-serif; font-size: 10px;
+  letter-spacing: 2px; color: var(--gray); margin-top: 2px;
+}
+.ht-grade-wrap {
+  display: flex; align-items: center; gap: 14px;
+  background: #0a0c16; border: 1px solid rgba(255,255,255,0.08);
+  padding: 10px 22px; z-index: 1;
+}
+.ht-grade-letter {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 64px; line-height: 1;
+}
+.ht-grade-right { display: flex; flex-direction: column; }
+.ht-grade-title {
+  font-family: 'Oswald', sans-serif; font-size: 18px;
+  font-weight: 700; letter-spacing: 1px; color: #ffffff;
+}
+.ht-grade-sub {
+  font-family: 'Rajdhani', sans-serif; font-size: 13px;
+  color: var(--gray-light); font-style: italic;
+}
+.ht-coach-quote {
+  font-family: 'Rajdhani', sans-serif; font-size: clamp(12px, 1.8vw, 15px);
+  font-style: italic; color: var(--gray); text-align: center;
+  max-width: min(460px, 90vw); padding: 0 16px; z-index: 1;
+}
+.ht-coming {
+  font-family: 'Oswald', sans-serif; font-size: 11px; letter-spacing: 4px;
+  color: var(--red); text-transform: uppercase; z-index: 1;
+  animation: blink 1.2s ease-in-out infinite;
+}
+
+/* ===========================
+   KICKOFF OVERLAY
+   =========================== */
+#kickoff {
+  position: fixed; inset: 0;
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 500; gap: 12px; overflow: hidden;
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 65%, rgba(44,115,56,0.22) 0%, transparent 70%),
+    linear-gradient(170deg, #030508 0%, #06080f 100%);
+}
+#kickoff.show { display: flex; }
+
+.ko-eyebrow {
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px; letter-spacing: 8px;
+  color: var(--gold); z-index: 1;
+  animation: koFadeIn 0.5s ease both;
+}
+.ko-main {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(64px, 15vw, 140px);
+  color: white; z-index: 1; line-height: 0.88;
+  animation: koSlam 0.42s cubic-bezier(0.22,0.61,0.36,1) both;
+  text-shadow: 0 0 80px rgba(255,200,50,0.18);
+}
+.ko-sub {
+  font-family: 'Oswald', sans-serif;
+  font-size: 15px; letter-spacing: 5px;
+  color: var(--gray-light); z-index: 1;
+  animation: koFadeIn 0.5s 0.35s ease both;
+}
+.ko-field-line {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 40%; z-index: 0;
+  background: linear-gradient(0deg, rgba(43,115,56,0.3) 0%, transparent 100%);
+  pointer-events: none;
+}
+.ko-ball-track {
+  position: absolute; z-index: 2;
+  width: 100%; height: 100px;
+  bottom: 35%; pointer-events: none;
+}
+#ko-ball {
+  position: absolute; font-size: 24px;
+  bottom: 0; left: -40px;
+  animation: koBallFly 1.9s 0.7s cubic-bezier(0.3,0,0.7,1) forwards;
+  opacity: 0;
+}
+@keyframes koBallFly {
+  0%   { left: 4%;   bottom: 0px;  transform: rotate(0deg)   scale(1);    opacity: 1; }
+  28%  { left: 28%;  bottom: 72px; transform: rotate(100deg) scale(1.1);              }
+  52%  { left: 52%;  bottom: 96px; transform: rotate(195deg) scale(1.15);             }
+  76%  { left: 74%;  bottom: 62px; transform: rotate(280deg) scale(1.05);             }
+  100% { left: 96%;  bottom: 0px;  transform: rotate(360deg) scale(0.9);  opacity: 0.5; }
+}
+@keyframes koSlam {
+  0%  { transform: scale(2.8); opacity: 0; }
+  60% { transform: scale(0.94); opacity: 1; }
+  100%{ transform: scale(1); }
+}
+@keyframes koFadeIn {
+  0%  { opacity: 0; transform: translateY(12px); }
+  100%{ opacity: 1; transform: translateY(0); }
+}
+#kickoff-scanlines {
+  position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.18) 3px,rgba(0,0,0,0.18) 6px);
+  z-index: 3;
+}
+
+/* ===========================
+   PAT / 2-PT CONVERSION MODAL
+   =========================== */
+#pat-modal {
+  position: fixed; inset: 0;
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 150; gap: 14px;
+  background: rgba(0,0,0,0.84);
+}
+#pat-modal.show { display: flex; }
+
+.pat-phase { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.pat-phase.hidden { display: none !important; }
+
+.pat-eyebrow {
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px; letter-spacing: 6px;
+  color: var(--gold); text-align: center;
+}
+.pat-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(34px, 7vw, 62px);
+  color: white; line-height: 1; text-align: center;
+}
+.pat-note {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px; color: var(--gray);
+  font-style: italic; text-align: center;
+}
+
+.pat-choices { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+
+.pat-choice-btn {
+  border: none; cursor: pointer; padding: 18px 22px;
+  text-align: center; min-width: 148px;
+  clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%);
+  transition: transform 0.14s, filter 0.14s;
+}
+.pat-choice-btn:hover { transform: translateY(-4px); filter: brightness(1.18); }
+
+.pat-choice-btn.fg {
+  background: linear-gradient(140deg, #111d3a 0%, #0c1628 100%);
+  border-top: 3px solid var(--blue);
+}
+.pat-choice-btn.two {
+  background: linear-gradient(140deg, #2e0a0a 0%, #1c0606 100%);
+  border-top: 3px solid var(--red);
+}
+
+.pcb-pts {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px; line-height: 1;
+}
+.pat-choice-btn.fg  .pcb-pts { color: #88aaff; }
+.pat-choice-btn.two .pcb-pts { color: var(--red-bright); }
+.pcb-name {
+  font-family: 'Oswald', sans-serif;
+  font-size: 15px; font-weight: 700;
+  letter-spacing: 1px; color: var(--white);
+}
+.pcb-sub {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px; color: var(--gray);
+  margin-top: 3px;
+}
+.pcb-diff {
+  display: inline-block; margin-top: 5px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 10px; letter-spacing: 2px;
+  padding: 2px 9px;
+}
+.pat-choice-btn.fg  .pcb-diff { background: rgba(58,111,204,0.3); color: #aac4ff; }
+.pat-choice-btn.two .pcb-diff { background: rgba(180,0,0,0.35); color: #ffaaaa; }
+
+/* PAT question screen */
+.pat-q-tag {
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px; letter-spacing: 4px;
+  color: var(--gold); text-align: center;
+}
+#pat-eq-wrap {
+  background: linear-gradient(135deg, #0d1222 0%, #101520 100%);
+  border: 1px solid rgba(247,197,48,0.15);
+  border-top: 3px solid var(--gold);
+  padding: 14px 28px; text-align: center;
+  min-width: min(360px, 88vw);
+}
+#pat-eq-prompt {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px; color: var(--gray);
+  font-style: italic; margin-bottom: 6px;
+}
+#pat-eq {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(20px, 4.5vw, 36px);
+  font-weight: 600; color: var(--white);
+  line-height: 1.2;
+}
+#pat-eq sup { font-size: 0.58em; vertical-align: super; line-height: 0; }
+
+#pat-answers { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
+.pat-ans-btn {
+  background: linear-gradient(155deg, #111928, #0e1320);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-left: 3px solid var(--gold-dim);
+  color: var(--white); cursor: pointer;
+  padding: 10px 16px; min-width: 115px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 13px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase;
+  transition: transform 0.12s, border-left-color 0.15s;
+  text-align: left;
+}
+.pat-ans-btn:hover:not(:disabled) {
+  border-left-color: var(--red); transform: translateY(-2px);
+}
+.pat-ans-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.pat-ans-btn.pat-correct { border-left-color: var(--green) !important; background: linear-gradient(155deg,#0a2a18,#0c2015) !important; }
+.pat-ans-btn.pat-wrong   { border-left-color: #dd3333 !important; background: linear-gradient(155deg,#2a0a0a,#200c0c) !important; }
+.pat-ans-btn.pat-reveal  { border-left-color: var(--green) !important; background: linear-gradient(155deg,#0a2a18,#0c2015) !important; }
+
+/* ===========================
+   YELLOW FLAG
+   =========================== */
+#flag-wrap {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 85;
+  display: none; overflow: hidden;
+}
+#flag-wrap.throwing { display: block; }
+
+#flag-svg-el {
+  position: absolute;
+  width: 60px; height: 80px;
+  animation: flagArc 0.95s cubic-bezier(0.22,0.61,0.36,1) forwards;
+}
+
+@keyframes flagArc {
+  0%   { left: -10vw; top: 20vh; transform: rotate(-40deg) scale(0.4); opacity: 0; }
+  15%  { opacity: 1; }
+  55%  { left: 40vw;  top: 38vh; transform: rotate(155deg) scale(1.15); }
+  100% { left: 44vw;  top: 56vh; transform: rotate(200deg) scale(0.85); opacity: 0.75; }
+}
+
+#flag-call {
+  position: absolute; top: 42%; left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  background: #f7c530; color: #000;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(22px, 4.5vw, 46px);
+  padding: 10px 28px; letter-spacing: 4px;
+  white-space: nowrap; z-index: 86;
+  border: 3px solid rgba(0,0,0,0.25);
+  transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1),
+              opacity 0.3s;
+  opacity: 0;
+}
+#flag-call.pop {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+.flag-penalty-type {
+  display: block;
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(11px, 2vw, 16px);
+  letter-spacing: 3px; font-weight: 700;
+  margin-top: 2px;
+}
+/* --- GATE SMOKE --- */
+#gate-smoke {
+  position: absolute; inset: 0;
+  pointer-events: none; z-index: 15;
+  overflow: hidden;
+}
+.smoke-puff {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(10px);
+  transform: translate(-50%, -50%) scale(0.2);
+  animation: smokeDrift linear forwards;
+}
+@keyframes smokeDrift {
+  0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 0.85; }
+  30%  { opacity: 0.65; }
+  100% { transform: translate(calc(-50% + var(--sdx)), calc(-50% + var(--sdy))) scale(3); opacity: 0; }
+}
+</style>
+<body>
+
+<!-- ===== TITLE SCREEN ===== -->
+<div id="title">
+  <div class="t-scanlines"></div>
+  <div class="t-stars" id="stars"></div>
+  <div class="t-field-glow"></div>
+  <div class="t-logo">
+    <div class="t-eyebrow">🏈 WESTERVILLE SOUTH HS PRESENTS</div>
+    <div class="t-main">BURWINKEL</div>
+    <div class="t-year">2K</div>
+    <div class="t-sub">ALGEBRA · FOOTBALL · GLORY</div>
+    <div class="t-wildcat">GO WILDCATS</div>
+    <div class="t-ratings">
+      <div class="t-badge">MATH IQ: 97 OVR</div>
+      <div class="t-badge">BEARD: 99 OVR</div>
+      <div class="t-badge">DAD JOKES: 85 OVR</div>
+    </div>
+    <div class="t-press">▶ PRESS ANY KEY TO START</div>
+    <div class="t-keys">KEYBOARD: [A] STANDARD &nbsp;·&nbsp; [B] FACTORED &nbsp;·&nbsp; [C] SOMETHING ELSE</div>
+  </div>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div id="game">
+
+  <!-- HUD SCOREBOARD -->
+  <div id="hud">
+    <div class="hud-team home">
+      <div class="hud-name wc">WILDCATS</div>
+      <div class="hud-score" id="wc-score">0</div>
+    </div>
+    <div class="hud-center">
+      <div class="hud-playnum" id="hud-playnum">PLAY 1 OF 10</div>
+      <div class="hud-clock ok" id="hud-clock">0:25</div>
+      <div class="hud-dd" id="hud-dd">1ST &amp; 10</div>
+      <div id="hud-quarter">Q1 · 2-FORM</div>
+    </div>
+    <div class="hud-team away">
+      <div class="hud-score" id="alg-score">0</div>
+      <div class="hud-name alg">ALG. DEF.</div>
+    </div>
+    <button id="snd-btn" onclick="toggleSndPanel()" title="Sound Settings">⚙</button>
+  </div>
+
+  <!-- SOUND MIXER PANEL -->
+  <div id="snd-panel">
+    <div class="snd-panel-hdr">🔊 SOUND MIXER</div>
+    <div class="snd-row">
+      <div class="snd-label"><span class="snd-icon">🎵</span>Whistles</div>
+      <label class="snd-toggle">
+        <input type="checkbox" id="tog-whistle" onchange="SND.whistle=this.checked">
+        <span class="snd-slider"></span>
+      </label>
+    </div>
+    <div class="snd-row">
+      <div class="snd-label"><span class="snd-icon">📣</span>Crowd</div>
+      <label class="snd-toggle">
+        <input type="checkbox" id="tog-crowd" checked onchange="SND.crowd=this.checked">
+        <span class="snd-slider"></span>
+      </label>
+    </div>
+    <div class="snd-row">
+      <div class="snd-label"><span class="snd-icon">💥</span>SFX</div>
+      <label class="snd-toggle">
+        <input type="checkbox" id="tog-sfx" checked onchange="SND.sfx=this.checked">
+        <span class="snd-slider"></span>
+      </label>
+    </div>
+    <div class="snd-vol-row">
+      <div class="snd-vol-label">
+        <span>🔉 Volume</span>
+        <span class="vol-pct" id="vol-pct">35%</span>
+      </div>
+      <input type="range" id="vol-slider" min="0" max="100" value="35"
+             oninput="setMasterVolume(this.value)">
+    </div>
+  </div>
+
+  <!-- FIELD -->
+  <div id="field-wrap">
+    <svg id="field-svg" viewBox="0 0 800 130" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+      <!-- Own end zone -->
+      <rect x="0" y="0" width="70" height="130" fill="#111525"/>
+      <text x="35" y="65" text-anchor="middle" dominant-baseline="middle"
+            fill="rgba(60,100,200,0.4)" font-family="Oswald" font-size="9.5" letter-spacing="1.5"
+            transform="rotate(-90,35,65)">ALG DEFENSE</text>
+
+      <!-- Field stripes (alternating) -->
+      <rect x="70" y="0" width="660" height="130" fill="#2b7338"/>
+      <rect x="70"  y="0" width="66" height="130" fill="#286934" opacity="0.55"/>
+      <rect x="202" y="0" width="66" height="130" fill="#286934" opacity="0.55"/>
+      <rect x="334" y="0" width="66" height="130" fill="#286934" opacity="0.55"/>
+      <rect x="466" y="0" width="66" height="130" fill="#286934" opacity="0.55"/>
+      <rect x="598" y="0" width="66" height="130" fill="#286934" opacity="0.55"/>
+
+      <!-- Yard lines -->
+      <line x1="70"  y1="0" x2="70"  y2="130" stroke="rgba(255,255,255,0.65)" stroke-width="2"/>
+      <line x1="136" y1="0" x2="136" y2="130" stroke="rgba(255,255,255,0.3)"  stroke-width="1"/>
+      <line x1="202" y1="0" x2="202" y2="130" stroke="rgba(255,255,255,0.3)"  stroke-width="1"/>
+      <line x1="268" y1="0" x2="268" y2="130" stroke="rgba(255,255,255,0.3)"  stroke-width="1"/>
+      <line x1="334" y1="0" x2="334" y2="130" stroke="rgba(255,255,255,0.3)"  stroke-width="1"/>
+      <line x1="400" y1="0" x2="400" y2="130" stroke="rgba(255,255,255,0.65)" stroke-width="2"/>
+      <line x1="466" y1="0" x2="466" y2="130" stroke="rgba(255,255,255,0.3)"  stroke-width="1"/>
+      <line x1="532" y1="0" x2="532" y2="130" stroke="rgba(255,255,255,0.3)"  stroke-width="1"/>
+      <line x1="598" y1="0" x2="598" y2="130" stroke="rgba(255,255,255,0.3)"  stroke-width="1"/>
+      <line x1="664" y1="0" x2="664" y2="130" stroke="rgba(255,255,255,0.3)"  stroke-width="1"/>
+      <line x1="730" y1="0" x2="730" y2="130" stroke="rgba(255,255,255,0.65)" stroke-width="2"/>
+
+      <!-- Yard numbers -->
+      <text x="103" y="65" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,255,255,0.3)" font-family="Oswald" font-size="10">OWN 20</text>
+      <text x="202" y="65" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,255,255,0.35)" font-family="Oswald" font-size="11">30</text>
+      <text x="268" y="65" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,255,255,0.35)" font-family="Oswald" font-size="11">40</text>
+      <text x="334" y="65" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,255,255,0.35)" font-family="Oswald" font-size="11">50</text>
+      <text x="400" y="65" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,255,255,0.55)" font-family="Oswald" font-size="13" font-weight="bold">MID</text>
+      <text x="466" y="65" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,255,255,0.35)" font-family="Oswald" font-size="11">40</text>
+      <text x="532" y="65" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,255,255,0.35)" font-family="Oswald" font-size="11">30</text>
+      <text x="598" y="65" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,255,255,0.35)" font-family="Oswald" font-size="11">20</text>
+      <text x="664" y="65" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,255,255,0.35)" font-family="Oswald" font-size="11">10</text>
+
+      <!-- Opponent end zone -->
+      <rect x="730" y="0" width="70" height="130" fill="#280c0c"/>
+      <text x="765" y="65" text-anchor="middle" dominant-baseline="middle"
+            fill="rgba(200,50,50,0.5)" font-family="Oswald" font-size="9.5" letter-spacing="1.5"
+            transform="rotate(90,765,65)">WILDCATS</text>
+
+      <!-- Hash marks -->
+      <line x1="136" y1="48" x2="136" y2="55" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+      <line x1="136" y1="75" x2="136" y2="82" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+      <line x1="268" y1="48" x2="268" y2="55" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+      <line x1="268" y1="75" x2="268" y2="82" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+      <line x1="466" y1="48" x2="466" y2="55" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+      <line x1="466" y1="75" x2="466" y2="82" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+      <line x1="532" y1="48" x2="532" y2="55" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+      <line x1="532" y1="75" x2="532" y2="82" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+      <line x1="664" y1="48" x2="664" y2="55" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+      <line x1="664" y1="75" x2="664" y2="82" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+
+      <!-- First-down marker line -->
+      <line id="fd-line" x1="202" y1="0" x2="202" y2="130"
+            stroke="#f7c530" stroke-width="3.5" opacity="0.9"/>
+
+      <!-- Ball -->
+      <g id="ball">
+        <ellipse cx="0" cy="10" rx="10" ry="3" fill="rgba(0,0,0,0.35)"/>
+        <ellipse cx="0" cy="0" rx="10" ry="6.5" fill="#b8620b" stroke="#9a5008" stroke-width="1.2"/>
+        <line x1="-8.5" y1="0" x2="8.5" y2="0" stroke="white" stroke-width="0.9"/>
+        <line x1="0" y1="-5.5" x2="0" y2="5.5" stroke="white" stroke-width="0.9"/>
+        <line x1="-4.5" y1="-4" x2="4.5" y2="-4" stroke="white" stroke-width="0.65"/>
+        <line x1="-4.5" y1="4"  x2="4.5" y2="4"  stroke="white" stroke-width="0.65"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- PLAY AREA -->
+  <div id="play-area">
+    <div class="pa-situation">IDENTIFY THE FORMATION — CALL YOUR COVERAGE</div>
+
+    <div id="eq-card">
+      <div class="eq-label">📋 INCOMING OFFENSIVE PLAY</div>
+      <div id="eq-display">x² + 5x + 6</div>
+    </div>
+
+    <div class="pa-call-label">SELECT YOUR DEFENSIVE READ</div>
+
+    <!-- Standard 3-button plays -->
+    <div id="plays">
+      <button class="play-btn" id="btn-std" onclick="answer('standard')">
+        <div class="pb-hotkey">A</div>
+        <div class="pb-type">PLAY A</div>
+        <div class="pb-name">Standard Form</div>
+        <div class="pb-desc">ax² + bx + c</div>
+      </button>
+      <button class="play-btn" id="btn-fac" onclick="answer('factored')">
+        <div class="pb-hotkey">B</div>
+        <div class="pb-type">PLAY B</div>
+        <div class="pb-name">Factored Form</div>
+        <div class="pb-desc">a(x+r)(x+s)</div>
+      </button>
+      <button class="play-btn" id="btn-oth" onclick="answer('other')" style="display:none">
+        <div class="pb-hotkey">C</div>
+        <div class="pb-type">PLAY C</div>
+        <div class="pb-name">Something Else</div>
+        <div class="pb-desc">Another form...</div>
+      </button>
+    </div>
+
+    <!-- Q2 Grouping: tap instruction strip -->
+    <div id="group-tap-cue">
+      <span class="tap-cue-icon">👆</span>
+      <span class="tap-cue-text">Click (or press A / B / C) to select two matching equations</span>
+    </div>
+
+    <!-- Q2 Grouping: three equation cards (each card is clickable) -->
+    <div id="group-eqs">
+      <div class="geq-card" id="geq-card-0" onclick="toggleGeqSelect(0)">
+        <div class="geq-label">A</div>
+        <div class="geq-eq" id="geq-a"></div>
+        <div class="geq-select-zone" id="geq-sel-0">
+          <span class="geq-check">TAP TO SELECT</span>
+        </div>
+      </div>
+      <div class="geq-card" id="geq-card-1" onclick="toggleGeqSelect(1)">
+        <div class="geq-label">B</div>
+        <div class="geq-eq" id="geq-b"></div>
+        <div class="geq-select-zone" id="geq-sel-1">
+          <span class="geq-check">TAP TO SELECT</span>
+        </div>
+      </div>
+      <div class="geq-card" id="geq-card-2" onclick="toggleGeqSelect(2)">
+        <div class="geq-label">C</div>
+        <div class="geq-eq" id="geq-c"></div>
+        <div class="geq-select-zone" id="geq-sel-2">
+          <span class="geq-check">TAP TO SELECT</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q2 Grouping: hint + confirm popup -->
+    <div id="group-submit-row" style="display:none">
+      <div id="group-hint">Click two equations that share the same form</div>
+    </div>
+
+    <!-- Confirm button — pops in only after 2 cards are selected -->
+    <div id="group-confirm-popup">
+      <button id="group-confirm-btn" onclick="submitGroupAnswer()">
+        ✓ CONFIRM SELECTION
+      </button>
+      <div id="group-confirm-sub">
+        or press <span class="space-key-badge">SPACE</span> to confirm
+      </div>
+    </div>
+
+    <!-- Steel gate overlay — two panels that slide apart on each new question -->
+    <div id="gate" aria-hidden="true">
+      <div class="gate-panel gate-left"></div>
+      <div class="gate-panel gate-right"></div>
+      <div class="gate-seam"></div>
+      <div id="gate-smoke"></div>
+    </div>
+
+    <div class="bar-wrap">
+      <div id="prog-fill" style="width:10%"></div>
+    </div>
+    <div id="play-count">PLAY 1 OF 10</div>
+    <div class="bar-wrap">
+      <div id="clock-fill"></div>
+    </div>
+  </div>
+
+  <!-- TICKER -->
+  <div id="ticker">
+    <div class="tick-tag">ANALYST</div>
+    <div id="tick-text">Coach Burwinkel adjusts his headset... Wildcats break the huddle!</div>
+  </div>
+
+</div>
+
+<!-- RESULT OVERLAY -->
+<div id="result-overlay">
+  <div id="result-banner" class="rb-firstdown">FIRST DOWN!</div>
+  <div id="result-sub">KEEP DRIVING, WILDCATS!</div>
+</div>
+
+<!-- YELLOW FLAG -->
+<div id="flag-wrap">
+  <svg id="flag-svg-el" viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">
+    <!-- stick -->
+    <line x1="8" y1="8" x2="8" y2="78" stroke="#888" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- flag cloth - wavy yellow pennant -->
+    <path d="M8 10 Q34 6 54 18 Q34 28 8 24 Z" fill="#f7c530" stroke="#c9a010" stroke-width="1.2"/>
+    <!-- flag shading -->
+    <path d="M8 10 Q30 8 50 18 Q30 20 8 18 Z" fill="rgba(255,255,255,0.22)"/>
+    <!-- ball at base -->
+    <circle cx="8" cy="79" r="4" fill="#b8620b" stroke="#9a5008" stroke-width="1"/>
+  </svg>
+  <div id="flag-call">
+    🚩 FLAG ON THE PLAY
+    <span class="flag-penalty-type" id="flag-penalty-type">ILLEGAL FORMATION</span>
+  </div>
+</div>
+
+<!-- KICKOFF OVERLAY -->
+<div id="kickoff">
+  <div id="kickoff-scanlines"></div>
+  <div class="ko-field-line"></div>
+  <div class="ko-ball-track">
+    <div id="ko-ball">🏈</div>
+  </div>
+  <div class="ko-eyebrow">🏟️ BURWINKEL STADIUM · WESTERVILLE SOUTH</div>
+  <div class="ko-main">KICKOFF!</div>
+  <div class="ko-sub">WILDCATS VS. ALGEBRA DEFENSE</div>
+</div>
+
+<!-- PAT / 2-PT CONVERSION MODAL -->
+<div id="pat-modal">
+  <!-- Phase 1: Choose -->
+  <div class="pat-phase" id="pat-choose">
+    <div class="pat-eyebrow">⚡ EXTRA POINT OPPORTUNITY</div>
+    <div class="pat-title">WHAT'S THE CALL?</div>
+    <div class="pat-note">Choose your play — easy or go for glory</div>
+    <div class="pat-choices">
+      <button class="pat-choice-btn fg" onclick="selectPAT('fg')">
+        <div class="pcb-pts">+1</div>
+        <div class="pcb-name">🥅 Kick the FG</div>
+        <div class="pcb-sub">Field goal attempt</div>
+        <div class="pcb-diff">EASIER QUESTION</div>
+      </button>
+      <button class="pat-choice-btn two" onclick="selectPAT('two')">
+        <div class="pcb-pts">+2</div>
+        <div class="pcb-name">💪 Go For Two</div>
+        <div class="pcb-sub">2-point conversion</div>
+        <div class="pcb-diff">HARDER QUESTION</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Phase 2: Question -->
+  <div class="pat-phase hidden" id="pat-question">
+    <div class="pat-q-tag" id="pat-q-tag">🥅 FIELD GOAL ATTEMPT</div>
+    <div id="pat-eq-wrap">
+      <div id="pat-eq-prompt">Identify the form:</div>
+      <div id="pat-eq">x² + 5x + 6</div>
+    </div>
+    <div id="pat-answers"></div>
+  </div>
+</div>
+
+<!-- QUARTER TRANSITION SCREEN -->
+<div id="qtr-screen">
+  <div class="qs-scanlines"></div>
+  <div class="qs-glow"></div>
+  <div class="qs-end" id="qs-end">END OF 1ST QUARTER</div>
+  <div class="qs-num" id="qs-num">2ND</div>
+  <div class="qs-bar"></div>
+  <div class="qs-mode" id="qs-mode" style="color:var(--gold)">QUARTER</div>
+  <div class="qs-desc" id="qs-desc">Next up: grouping challenge</div>
+  <div class="qs-progress">
+    <div class="qs-dot done" id="qd-1"></div>
+    <div class="qs-dot active" id="qd-2"></div>
+    <div class="qs-dot" id="qd-3"></div>
+    <div class="qs-dot" id="qd-4"></div>
+  </div>
+</div>
+
+<!-- HALFTIME OVERLAY -->
+<div id="halftime">
+  <div class="ht-scanlines"></div>
+  <div class="ht-eyebrow">⏸ END OF FIRST HALF</div>
+  <div class="ht-main">HALFTIME</div>
+  <div class="ht-sub">LOCKER ROOM BREAKDOWN</div>
+  <div class="ht-score">
+    <div class="ht-team">
+      <div class="ht-tname">WILDCATS</div>
+      <div class="ht-tscore wc" id="ht-wc">0</div>
+    </div>
+    <div class="ht-div">—</div>
+    <div class="ht-team">
+      <div class="ht-tname">ALG. DEF.</div>
+      <div class="ht-tscore alg" id="ht-alg">0</div>
+    </div>
+  </div>
+  <div class="ht-stats-wrap">
+    <div class="ht-stat-box">
+      <div class="ht-stat-num" id="ht-q1-stat">—</div>
+      <div class="ht-stat-label">Q1 CORRECT</div>
+    </div>
+    <div class="ht-stat-box">
+      <div class="ht-stat-num" id="ht-q2-stat">—</div>
+      <div class="ht-stat-label">Q2 CORRECT</div>
+    </div>
+    <div class="ht-stat-box">
+      <div class="ht-stat-num" id="ht-total-stat">—</div>
+      <div class="ht-stat-label">FIRST HALF</div>
+    </div>
+    <div class="ht-stat-box">
+      <div class="ht-stat-num" id="ht-pct-stat">—</div>
+      <div class="ht-stat-label">ACCURACY</div>
+    </div>
+  </div>
+  <div class="ht-grade-wrap">
+    <div class="ht-grade-letter" id="ht-grade">B</div>
+    <div class="ht-grade-right">
+      <div class="ht-grade-title" id="ht-grade-title">SOLID HALF</div>
+      <div class="ht-grade-sub" id="ht-grade-sub">Keep it up in Q3</div>
+    </div>
+  </div>
+  <div class="ht-coach-quote" id="ht-quote">"Something Else is coming. Vertex form: a(x−h)² + k."</div>
+  <div class="ht-coming">⚠ Q3 — SOMETHING ELSE UNLOCKED</div>
+</div>
+
+<!-- GAME OVER -->
+<div id="gameover" style="display:none">
+  <div class="go-title">🏈 FINAL SCORE</div>
+  <div class="go-scoreboard">
+    <div class="go-team">
+      <div class="go-tname">WILDCATS</div>
+      <div class="go-tscore wc" id="go-wc">0</div>
+    </div>
+    <div class="go-div">—</div>
+    <div class="go-team">
+      <div class="go-tname">ALG. DEFENSE</div>
+      <div class="go-tscore alg" id="go-alg">0</div>
+    </div>
+  </div>
+  <div class="go-result" id="go-result">WILDCATS WIN!</div>
+  <div class="go-stats" id="go-stats"></div>
+  <div class="go-joke" id="go-joke"></div>
+  <button class="go-btn" onclick="resetGame()">🏈 PLAY AGAIN</button>
+</div>
+
+<script>
+// ==============================
+// AUDIO ENGINE  (Web Audio API — no files needed)
+// ==============================
+let audioCtx = null;
+
+// Sound channel toggles (controlled by mixer panel)
+// Whistles are OFF by default — can be enabled in the mixer
+const SND = { whistle: false, crowd: true, sfx: true };
+
+function toggleSndPanel() {
+  const p = document.getElementById('snd-panel');
+  const b = document.getElementById('snd-btn');
+  p.classList.toggle('open');
+  b.classList.toggle('active', p.classList.contains('open'));
+}
+// Close mixer when clicking outside
+document.addEventListener('click', e => {
+  const panel = document.getElementById('snd-panel');
+  const btn   = document.getElementById('snd-btn');
+  if (panel && !panel.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+    panel.classList.remove('open');
+    document.getElementById('snd-btn').classList.remove('active');
+  }
+});
+
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// Master gain node — all sounds route through this
+let masterGain = null;
+function getMaster() {
+  const ctx = getCtx();
+  if (!masterGain) {
+    masterGain = ctx.createGain();
+    masterGain.gain.value = 0.35; // default: quieter than before
+    masterGain.connect(ctx.destination);
+  }
+  return masterGain;
+}
+
+function setMasterVolume(val) {
+  const v = parseInt(val) / 100;
+  if (masterGain) masterGain.gain.value = v;
+  // update slider gradient fill
+  const slider = document.getElementById('vol-slider');
+  if (slider) slider.style.background = `linear-gradient(90deg, var(--gold) ${val}%, #2a2a3c ${val}%)`;
+  const pct = document.getElementById('vol-pct');
+  if (pct) pct.textContent = val + '%';
+}
+
+// ---- WHISTLE -------------------------------------------------------
+// Creates a realistic ref whistle: sine at ~3.8kHz with a rapid tremolo LFO
+function sndWhistle(duration = 0.32, vol = 0.38) {
+  if (!SND.whistle) return;
+  try {
+    const ctx = getCtx();
+    const t   = ctx.currentTime;
+
+    const osc    = ctx.createOscillator();
+    const gain   = ctx.createGain();
+    const lfo    = ctx.createOscillator();
+    const lfoG   = ctx.createGain();
+
+    // Tremolo — gives the pea-whistle warble
+    lfo.frequency.value = 22;
+    lfoG.gain.value = 180;
+    lfo.connect(lfoG);
+    lfoG.connect(osc.frequency);
+
+    osc.type = 'sine';
+    osc.frequency.value = 3800;
+    osc.connect(gain);
+    gain.connect(getMaster());
+
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(vol, t + 0.018);
+    gain.gain.setValueAtTime(vol, t + duration - 0.055);
+    gain.gain.linearRampToValueAtTime(0, t + duration);
+
+    lfo.start(t); lfo.stop(t + duration);
+    osc.start(t); osc.stop(t + duration);
+  } catch(e) {}
+}
+
+// Two short blasts — penalty / wrong answer
+function sndPenaltyWhistle() {
+  sndWhistle(0.22, 0.42);
+  setTimeout(() => sndWhistle(0.28, 0.42), 310);
+}
+
+// Long TD / game-over whistle
+function sndLongWhistle() { sndWhistle(0.7, 0.35); }
+
+// ---- TACKLE  -------------------------------------------------------
+// Low-freq noise thud + mid crunch layer — sounds like pads colliding
+function sndTackle() {
+  if (!SND.sfx) return;
+  try {
+    const ctx = getCtx();
+    const t   = ctx.currentTime;
+
+    // Layer 1 — deep thud
+    function noiseLayer(lpFreq, vol, dur) {
+      const buf  = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+
+      const src  = ctx.createBufferSource();
+      src.buffer = buf;
+
+      const filt = ctx.createBiquadFilter();
+      filt.type  = 'lowpass';
+      filt.frequency.value = lpFreq;
+      filt.Q.value = 2.5;
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(vol, t + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+
+      src.connect(filt); filt.connect(gain); gain.connect(getMaster());
+      src.start(t);
+    }
+
+    // Layer 2 — crunch (bandpass noise)
+    function crunchLayer() {
+      const dur  = 0.18;
+      const buf  = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+
+      const src  = ctx.createBufferSource();
+      src.buffer = buf;
+
+      const bp   = ctx.createBiquadFilter();
+      bp.type    = 'bandpass';
+      bp.frequency.value = 1400;
+      bp.Q.value = 0.9;
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.55, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+
+      src.connect(bp); bp.connect(gain); gain.connect(getMaster());
+      src.start(t);
+    }
+
+    noiseLayer(140, 1.0, 0.32);
+    noiseLayer(300, 0.6, 0.18);
+    crunchLayer();
+  } catch(e) {}
+}
+
+// ---- CROWD CHEER  --------------------------------------------------
+// White noise through a bandpass sweep — rises like a stadium roar
+function sndCrowdCheer(vol = 0.38, dur = 1.6) {
+  if (!SND.crowd) return;
+  try {
+    const ctx = getCtx();
+    const t   = ctx.currentTime;
+
+    const buf  = ctx.createBuffer(2, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+
+    const bp = ctx.createBiquadFilter();
+    bp.type  = 'bandpass';
+    bp.frequency.setValueAtTime(500, t);
+    bp.frequency.linearRampToValueAtTime(900, t + 0.4);
+    bp.Q.value = 0.35;
+
+    const hp = ctx.createBiquadFilter();
+    hp.type  = 'highpass';
+    hp.frequency.value = 280;
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(vol, t + 0.12);
+    gain.gain.setValueAtTime(vol, t + dur * 0.55);
+    gain.gain.linearRampToValueAtTime(0, t + dur);
+
+    src.connect(bp); bp.connect(hp); hp.connect(gain); gain.connect(getMaster());
+    src.start(t);
+  } catch(e) {}
+}
+
+// Big TD roar — two overlapping cheer layers
+function sndBigCheer() {
+  sndCrowdCheer(0.65, 2.2);
+  setTimeout(() => sndCrowdCheer(0.45, 1.8), 500);
+  setTimeout(() => sndWhistle(0.4, 0.28), 200);
+}
+
+// Crowd boo — filter sweeps downward, moan-ish undertone
+function sndCrowdBoo() {
+  if (!SND.crowd) return;
+  try {
+    const ctx = getCtx();
+    const t   = ctx.currentTime;
+    const dur = 1.4;
+
+    const buf  = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+
+    const src  = ctx.createBufferSource();
+    src.buffer = buf;
+
+    const bp  = ctx.createBiquadFilter();
+    bp.type   = 'bandpass';
+    bp.frequency.setValueAtTime(700, t);
+    bp.frequency.linearRampToValueAtTime(340, t + dur);
+    bp.Q.value = 0.4;
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.32, t + 0.18);
+    gain.gain.setValueAtTime(0.32, t + dur * 0.65);
+    gain.gain.linearRampToValueAtTime(0, t + dur);
+
+    src.connect(bp); bp.connect(gain); gain.connect(getMaster());
+    src.start(t);
+
+    // Low undertone moan
+    const osc  = ctx.createOscillator();
+    const oGain = ctx.createGain();
+    osc.type   = 'sawtooth';
+    osc.frequency.setValueAtTime(260, t);
+    osc.frequency.linearRampToValueAtTime(180, t + dur);
+    oGain.gain.setValueAtTime(0, t);
+    oGain.gain.linearRampToValueAtTime(0.07, t + 0.25);
+    oGain.gain.linearRampToValueAtTime(0, t + dur);
+    osc.connect(oGain); oGain.connect(getMaster());
+    osc.start(t); osc.stop(t + dur);
+  } catch(e) {}
+}
+
+// Upbeat "correct" short cheer + whistle chirp
+function sndCorrect() {
+  sndCrowdCheer(0.3, 1.1);
+  setTimeout(() => sndWhistle(0.18, 0.22), 80);
+}
+
+// ==============================
+// PENALTY FLAG MECHANIC
+// ==============================
+const PENALTY_NAMES = [
+  'WRONG FORMATION',
+  'ILLEGAL PROCEDURE',
+  'FALSE START — DEFENSE',
+  'UNSPORTSMANLIKE MATH',
+  'UNNECESSARY ROUGHNESS',
+  'HOLDING — WRONG FORM',
+  'PASS INTERFERENCE',
+  'ILLEGAL USE OF FACTORED FORM',
+];
+
+function throwFlag(callback) {
+  getCtx(); // ensure AudioContext is alive from user gesture chain
+  sndPenaltyWhistle();
+  setTimeout(() => sndTackle(), 120);
+  setTimeout(() => sndCrowdBoo(), 350);
+
+  const wrap = document.getElementById('flag-wrap');
+  const call = document.getElementById('flag-call');
+  const type = document.getElementById('flag-penalty-type');
+
+  type.textContent = PENALTIES_NAMES_PICK();
+  wrap.classList.add('throwing');
+  call.classList.remove('pop');
+
+  // Flag call text pops in after flag lands
+  setTimeout(() => { call.classList.add('pop'); }, 520);
+
+  // Auto-dismiss and fire callback
+  setTimeout(() => {
+    call.classList.remove('pop');
+    setTimeout(() => {
+      wrap.classList.remove('throwing');
+      if (callback) callback();
+    }, 280);
+  }, 1550);
+}
+
+function PENALTIES_NAMES_PICK() {
+  return PENALTY_NAMES[Math.floor(Math.random() * PENALTY_NAMES.length)];
+}
+
+// ==============================
+// QUESTION BANK
+// ==============================
+const ALL_QUESTIONS = [
+  // --- STANDARD FORM: ax² + bx + c ---
+  { eq: 'x<sup>2</sup> + 5x + 6',           ans: 'standard' },
+  { eq: '2x<sup>2</sup> − 3x + 1',          ans: 'standard' },
+  { eq: '−x<sup>2</sup> + 4x − 4',          ans: 'standard' },
+  { eq: '3x<sup>2</sup> + 7x − 2',          ans: 'standard' },
+  { eq: 'x<sup>2</sup> − 9',                ans: 'standard' },
+  { eq: 'x<sup>2</sup> − 6x + 9',           ans: 'standard' },
+  { eq: '−2x<sup>2</sup> + 5x + 3',         ans: 'standard' },
+  { eq: '4x<sup>2</sup> − 16',              ans: 'standard' },
+  { eq: 'x<sup>2</sup> + 10x + 25',         ans: 'standard' },
+  { eq: '5x<sup>2</sup> − 2x + 8',          ans: 'standard' },
+  // --- FACTORED FORM: a(x−r)(x−s) ---
+  { eq: '(x + 2)(x + 3)',                   ans: 'factored' },
+  { eq: '(x − 1)(x + 5)',                   ans: 'factored' },
+  { eq: '2(x − 3)(x + 1)',                  ans: 'factored' },
+  { eq: '(x + 4)(x − 4)',                   ans: 'factored' },
+  { eq: '(x + 7)(x − 2)',                   ans: 'factored' },
+  { eq: '(2x + 1)(x − 3)',                  ans: 'factored' },
+  { eq: '−(x + 5)(x + 2)',                  ans: 'factored' },
+  { eq: '(x − 8)(x + 3)',                   ans: 'factored' },
+  { eq: '3(x + 2)(x − 2)',                  ans: 'factored' },
+  { eq: '(x − 6)(x − 1)',                   ans: 'factored' },
+  // --- VERTEX FORM (OTHER): a(x−h)² + k ---
+  { eq: '(x − 3)<sup>2</sup> + 2',          ans: 'other' },
+  { eq: '2(x + 1)<sup>2</sup> − 5',         ans: 'other' },
+  { eq: '−(x − 4)<sup>2</sup> + 9',         ans: 'other' },
+  { eq: '(x + 2)<sup>2</sup> − 7',          ans: 'other' },
+  { eq: '3(x − 1)<sup>2</sup> + 4',         ans: 'other' },
+  { eq: '−2(x + 3)<sup>2</sup> + 1',        ans: 'other' },
+  { eq: '(x − 5)<sup>2</sup> + 11',         ans: 'other' },
+  { eq: '4(x + 2)<sup>2</sup> − 3',         ans: 'other' },
+  { eq: '(x + 6)<sup>2</sup> + 5',          ans: 'other' },
+  { eq: '−3(x − 2)<sup>2</sup> + 8',        ans: 'other' },
+];
+
+const COMMENTARY_CORRECT = [
+  "FIRST DOWN! Coach Burwinkel drew that one up in the dirt! With a protractor!",
+  "WHAT A READ! That student just solved that equation like it was standard operating procedure!",
+  "TEXTBOOK EXECUTION! Coach B is doing cartwheels in the press box! Well, a small happy shuffle.",
+  "The Wildcats are COOKING with quadratics tonight, folks! Someone call the fire marshal!",
+  "BRILLIANT! Even parallel lines in the stadium wish they could intersect with that answer!",
+  "LASER FOCUS! That's the kind of play that puts you on the honor roll AND the highlight reel!",
+  "I have SEEN it all, and THAT was spectacular! The scout from MIT is scribbling furiously!",
+  "Pure ALGEBRA ATHLETICISM! The Wildcats refuse to get factored out today!",
+  "OH MY GRAPH! That student identified the correct form faster than Mr. B's coffee goes cold!",
+  "MAGNIFICENT! The equation never stood a chance — this kid is operating at 97 OVR!",
+];
+
+const COMMENTARY_WRONG = [
+  "OH NO! That's an INCOMPLETE PASS! Hit the notes, kid — standard form awaits!",
+  "FLAGS DOWN! Illegal Procedure — wrong form! Coach B is stroking his beard at maximum concerned velocity.",
+  "The Algebra Defense SNIFFS IT OUT! Their playbook is full of x's... just x's.",
+  "ROUGH PLAY! Even the scoreboard is shaking its head in a not-so-rational manner.",
+  "Coach Burwinkel squints into the press box... he's seen this mistake before. At least twice today.",
+  "The crowd groans! That answer needed to be in better form — literally!",
+  "WRONG COVERAGE! The Algebra Defense scores bonus sophistication points for that stop!",
+  "Loss of yards! Why couldn't the student identify the equation? ...It had too many problems.",
+];
+
+const COMMENTARY_TD = [
+  "TOUCHDOWN WILDCATS!!! Math has NEVER looked so GORGEOUS on a football field!!! Call the news!!",
+  "SIX POINTS! Coach Burwinkel rips off his headset! He'll find it later. THAT'S WHAT QUADRATICS LOOKS LIKE!!!",
+];
+
+const COMMENTARY_TURNOVER = [
+  "TURNOVER! Algebra 1 Defense takes over! Those equations bit BACK! Don't let this happen again!",
+  "IT IS WHAT IT IS... The Algebra Defense scores. The scoreboard doesn't lie — but bad answers do.",
+];
+
+const JOKES = [
+  '"Why did the parabola win the game? It had a great vertex formation." — Coach B',
+  '"What\'s a math teacher\'s favorite football play? The SQUARE route." — Coach B',
+  '"Why don\'t quadratics make good quarterbacks? Too many interceptions of x." — Coach B',
+  '"What did Coach B say after the win? \'That was sum game!\'" — Coach B',
+  '"Why was the standard form nervous? It had a² much riding on this." — Coach B',
+  '"You know what\'s better than a touchdown? A TD with all your work shown." — Coach B',
+  '"Why was the factored form MVP? Because it brought both roots to the game." — Coach B',
+  '"Vertex form didn\'t show up today. It was in a different form entirely." — Coach B',
+];
+
+// ==============================
+// EASY PAT QUESTIONS (Field Goal — +1 pt)
+// Same form-identification format, simpler/cleaner equations
+// ==============================
+const PAT_EASY = [
+  { eq: 'x<sup>2</sup> + 3x + 2',    ans: 0, choices: ['Standard Form','Factored Form','Something Else'] },
+  { eq: '(x + 1)(x + 2)',            ans: 1, choices: ['Standard Form','Factored Form','Something Else'] },
+  { eq: '(x − 2)<sup>2</sup> + 1',   ans: 2, choices: ['Standard Form','Factored Form','Something Else'] },
+  { eq: 'x<sup>2</sup> − 4',         ans: 0, choices: ['Standard Form','Factored Form','Something Else'] },
+  { eq: '(x + 5)(x − 1)',            ans: 1, choices: ['Standard Form','Factored Form','Something Else'] },
+  { eq: '(x + 3)<sup>2</sup> − 4',   ans: 2, choices: ['Standard Form','Factored Form','Something Else'] },
+  { eq: '2x<sup>2</sup> + 4x + 2',   ans: 0, choices: ['Standard Form','Factored Form','Something Else'] },
+  { eq: '(x − 4)(x + 4)',            ans: 1, choices: ['Standard Form','Factored Form','Something Else'] },
+];
+
+// ==============================
+// HARD 2-PT CONVERSION QUESTIONS (+2 pts)
+// Conceptual: "which form does X?" — tests understanding, not just recognition
+// ==============================
+const PAT_HARD = [
+  {
+    prompt: 'Which form directly shows the x-intercepts (roots)?',
+    eq: null,
+    ans: 1,
+    choices: ['Standard Form', 'Factored Form', 'Something Else'],
+  },
+  {
+    prompt: 'Which form directly shows the vertex of the parabola?',
+    eq: null,
+    ans: 2,
+    choices: ['Standard Form', 'Factored Form', 'Something Else'],
+  },
+  {
+    prompt: 'Which form is ax² + bx + c?',
+    eq: null,
+    ans: 0,
+    choices: ['Standard Form', 'Factored Form', 'Something Else'],
+  },
+  {
+    prompt: 'The equation below is which form?',
+    eq: '−3(x − 2)<sup>2</sup> + 8',
+    ans: 2,
+    choices: ['Standard Form', 'Factored Form', 'Something Else'],
+  },
+  {
+    prompt: 'To find the y-intercept easily, plug in x = 0. Which form gives it directly as the constant term?',
+    eq: null,
+    ans: 0,
+    choices: ['Standard Form', 'Factored Form', 'Something Else'],
+  },
+  {
+    prompt: 'This tricky equation — what form is it?',
+    eq: '4(x + 1)(x − 3)',
+    ans: 1,
+    choices: ['Standard Form', 'Factored Form', 'Something Else'],
+  },
+  {
+    prompt: 'Which form is a(x − h)² + k?',
+    eq: null,
+    ans: 2,
+    choices: ['Standard Form', 'Factored Form', 'Something Else'],
+  },
+  {
+    prompt: 'What form is this equation?',
+    eq: '−x<sup>2</sup> + 6x − 5',
+    ans: 0,
+    choices: ['Standard Form', 'Factored Form', 'Something Else'],
+  },
+];
+
+let patPool = { easy: [], hard: [] };
+
+function refillPATPool() {
+  patPool.easy = shuffle([...PAT_EASY]);
+  patPool.hard = shuffle([...PAT_HARD]);
+}
+
+// ==============================
+// KICKOFF SEQUENCE
+// ==============================
+function doKickoff(callback) {
+  gateCloseInstant();   // seal the play area while kickoff overlay is showing
+
+  const el = document.getElementById('kickoff');
+  el.classList.add('show');
+
+  // Reset ball animation by re-cloning
+  const oldBall = document.getElementById('ko-ball');
+  const newBall = oldBall.cloneNode(true);
+  oldBall.parentNode.replaceChild(newBall, oldBall);
+
+  // Sounds
+  setTimeout(() => sndCrowdCheer(0.5, 2.2), 300);
+
+  setTimeout(() => {
+    el.style.transition = 'opacity 0.6s ease';
+    el.style.opacity = '0';
+    setTimeout(() => {
+      el.classList.remove('show');
+      el.style.opacity = '';
+      el.style.transition = '';
+      if (callback) callback();   // → loadQuestion(), which handles its own gate
+    }, 620);
+  }, 3000);
+}
+
+// ==============================
+// PAT MECHANIC
+// ==============================
+let patCallback = null;
+
+function showPATChoice(afterCallback) {
+  patCallback = afterCallback;
+  document.getElementById('pat-choose').classList.remove('hidden');
+  document.getElementById('pat-question').classList.add('hidden');
+  document.getElementById('pat-modal').classList.add('show');
+}
+
+function selectPAT(type) {
+  if (patPool.easy.length === 0 || patPool.hard.length === 0) refillPATPool();
+
+  const isHard = type === 'two';
+  const q      = isHard ? patPool.hard.pop() : patPool.easy.pop();
+
+  // Switch to question phase
+  document.getElementById('pat-choose').classList.add('hidden');
+  document.getElementById('pat-question').classList.remove('hidden');
+
+  const tag = document.getElementById('pat-q-tag');
+  tag.textContent = isHard ? '💪 2-POINT CONVERSION — GO FOR IT!' : '🥅 FIELD GOAL ATTEMPT';
+
+  const prompt = document.getElementById('pat-eq-prompt');
+  const eqEl   = document.getElementById('pat-eq');
+
+  if (q.eq) {
+    // Has an equation to show
+    prompt.textContent = q.prompt || 'Identify the form:';
+    prompt.style.display = '';
+    eqEl.innerHTML = q.eq;
+    eqEl.style.display = '';
+    eqEl.style.fontSize = '';
+  } else {
+    // Prompt-only: show the question as the big text
+    prompt.textContent = '';
+    prompt.style.display = 'none';
+    eqEl.innerHTML = q.prompt;
+    eqEl.style.fontSize = 'clamp(14px, 2.8vw, 22px)';
+    eqEl.style.display = '';
+  }
+
+  // Render answer buttons
+  const container = document.getElementById('pat-answers');
+  container.innerHTML = '';
+  const hotkeys = ['A','B','C'];
+  q.choices.forEach((label, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'pat-ans-btn';
+    btn.innerHTML = `<span style="color:var(--gold);font-size:10px;letter-spacing:2px;display:block;margin-bottom:2px">PLAY ${hotkeys[i]}</span>${label}`;
+    btn.onclick = () => answerPAT(i, q.ans, isHard, container);
+    container.appendChild(btn);
+  });
+}
+
+function answerPAT(chosen, correct, isHard, container) {
+  const btns = container.querySelectorAll('.pat-ans-btn');
+  btns.forEach(b => b.disabled = true);
+
+  const pts = isHard ? 2 : 1;
+  const won = chosen === correct;
+
+  btns[chosen].classList.add(won ? 'pat-correct' : 'pat-wrong');
+  if (!won) btns[correct].classList.add('pat-reveal');
+
+  if (won) {
+    S.wcPts += pts;
+    updateHUD();
+    sndCorrect();
+    setTimeout(() => {
+      if (pts === 2) spawnConfetti();
+      showResult(
+        pts === 2 ? '2-POINT CONVERSION! 💥' : 'FIELD GOAL GOOD! 🥅',
+        pts === 2 ? 'WILDCATS GET 2 BONUS POINTS!' : '+1 POINT FOR THE WILDCATS!',
+        pts === 2 ? 'rb-td' : 'rb-firstdown'
+      );
+      setTimeout(() => {
+        hideResult();
+        closePAT();
+      }, 1600);
+    }, 700);
+  } else {
+    sndCrowdBoo();
+    setTimeout(() => {
+      showResult(
+        isHard ? 'NO GOOD! 💨' : 'KICK BLOCKED! 🛑',
+        isHard ? 'Conversion fails — no points!' : 'Field goal blocked — 0 points!',
+        'rb-wrong'
+      );
+      setTimeout(() => {
+        hideResult();
+        closePAT();
+      }, 1600);
+    }, 700);
+  }
+}
+
+function closePAT() {
+  document.getElementById('pat-modal').classList.remove('show');
+  if (patCallback) {
+    const cb = patCallback;
+    patCallback = null;
+    // 300ms breath so PAT modal is visually gone before next event fires
+    setTimeout(cb, 300);
+  }
+}
+
+// ==============================
+// FIELD MATH
+// ==============================
+// SVG x: 70 = own end zone edge, 730 = opponent end zone edge → 660px for 100 yards
+function yardToX(y) { return 70 + (y / 100) * 660; }
+
+function setFieldPos(yards, fdMarker) {
+  const bx = yardToX(Math.min(Math.max(yards, 0), 100));
+  document.getElementById('ball').setAttribute('transform', `translate(${bx}, 65)`);
+  const fx = yardToX(Math.min(fdMarker, 100));
+  const fl = document.getElementById('fd-line');
+  fl.setAttribute('x1', fx); fl.setAttribute('x2', fx);
+}
+
+// ==============================
+// GAME STATE
+// ==============================
+let S = {}; // state
+let clockTick = null;
+let animReq   = null;
+let inputLocked = false;
+
+function makeState() {
+  // ---- Q1: plays 1-3 — 2-form only (Standard vs Factored) ----
+  const stdPool = shuffle(ALL_QUESTIONS.filter(q => q.ans === 'standard'));
+  const facPool = shuffle(ALL_QUESTIONS.filter(q => q.ans === 'factored'));
+  const othPool = shuffle(ALL_QUESTIONS.filter(q => q.ans === 'other'));
+
+  const q1 = shuffle([
+    {...stdPool[0], qtype: 'two'},
+    {...stdPool[1], qtype: 'two'},
+    {...facPool[0], qtype: 'two'},
+  ]);
+
+  // ---- Q2: plays 4-6 — grouping (pick which 2 of A/B/C share a form) ----
+  const q2 = makeGroupingQuestions(stdPool, facPool);
+
+  // ---- Q3: plays 7-9 — full 3-form ----
+  const q3 = shuffle([
+    {...stdPool[2], qtype: 'full'},
+    {...facPool[1], qtype: 'full'},
+    {...othPool[0], qtype: 'full'},
+  ]);
+
+  // ---- Q4: plays 10-12 — full 3-form, crunch time (harder mix) ----
+  const q4 = shuffle([
+    {...stdPool[3], qtype: 'full'},
+    {...facPool[2], qtype: 'full'},
+    {...othPool[1], qtype: 'full'},
+  ]);
+
+  const questions = [...q1, ...q2, ...q3, ...q4];
+
+  return {
+    questions,
+    qIdx: 0,
+    pos: 20,
+    fdMarker: 30,
+    down: 1,
+    wcPts: 0,
+    algPts: 0,
+    correct: 0,
+    correctByQtr: [0, 0, 0, 0],       // [q1, q2, q3, q4]
+    clockVal: 25,
+    phase: 'playing',
+    haltimeDone: false,
+    qtrTransDone: [false, false, false], // [Q1→Q2, Q2→HT(unused), Q3→Q4]
+  };
+}
+
+// Build 3 grouping questions for Q2
+// Each has: eqA, eqB, eqC (innerHTML strings), ans ('AB'|'AC'|'BC'), matchForm label
+function makeGroupingQuestions(stdPool, facPool) {
+  // We'll use stdPool[4..6] and facPool[2..4] for grouping source material
+  const sExtra = shuffle(ALL_QUESTIONS.filter(q => q.ans === 'standard')).slice(4);
+  const fExtra = shuffle(ALL_QUESTIONS.filter(q => q.ans === 'factored')).slice(2);
+
+  // Each grouping question picks 2 of one form + 1 of the other, then shuffles them
+  const configs = [
+    { twoForm: 'standard', twoSrc: [sExtra[0], sExtra[1]], oneSrc: fExtra[0] },
+    { twoForm: 'factored',  twoSrc: [fExtra[1], fExtra[2]], oneSrc: sExtra[2] },
+    { twoForm: 'standard', twoSrc: [sExtra[3], sExtra[4]], oneSrc: fExtra[3] },
+  ];
+
+  return configs.map(cfg => {
+    // Arrange 3 equations: the pair + the odd one, shuffled
+    const triplet = shuffle([
+      { eq: cfg.twoSrc[0].eq, form: cfg.twoForm },
+      { eq: cfg.twoSrc[1].eq, form: cfg.twoForm },
+      { eq: cfg.oneSrc.eq,    form: cfg.twoForm === 'standard' ? 'factored' : 'standard' },
+    ]);
+
+    // Find which pair share the twoForm
+    const matchingIndices = triplet.map((item, i) => item.form === cfg.twoForm ? i : -1).filter(i => i >= 0);
+    const pairKey = matchingIndices.sort().map(i => 'ABC'[i]).join('');
+
+    return {
+      qtype: 'group',
+      eqs: triplet.map(t => t.eq),
+      ans: pairKey,    // 'AB', 'AC', or 'BC'
+      matchForm: cfg.twoForm,
+    };
+  });
+}
+
+function shuffle(a) {
+  const b = [...a];
+  for (let i = b.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [b[i], b[j]] = [b[j], b[i]];
+  }
+  return b;
+}
+
+function rnd(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// ==============================
+// CLOCK
+// ==============================
+function startClock() {
+  clearInterval(clockTick);
+  S.clockVal = 25;
+  renderClock();
+  resetClockBar();
+  clockTick = setInterval(() => {
+    S.clockVal--;
+    renderClock();
+    renderClockBar();
+    if (S.clockVal <= 0) {
+      clearInterval(clockTick);
+      if (!inputLocked) onTimeout();
+    }
+  }, 1000);
+}
+
+function stopClock() { clearInterval(clockTick); }
+
+function renderClock() {
+  const el = document.getElementById('hud-clock');
+  el.textContent = `0:${String(S.clockVal).padStart(2,'0')}`;
+  el.className = 'hud-clock ' + (S.clockVal <= 7 ? 'danger' : S.clockVal <= 14 ? 'warn' : 'ok');
+}
+
+function resetClockBar() {
+  const f = document.getElementById('clock-fill');
+  f.style.transition = 'none';
+  f.style.width = '100%';
+  f.style.background = 'var(--green)';
+  setTimeout(() => { f.style.transition = 'width 1s linear, background 0.4s'; }, 20);
+}
+
+function renderClockBar() {
+  const pct = (S.clockVal / 25) * 100;
+  const f = document.getElementById('clock-fill');
+  f.style.width = pct + '%';
+  f.style.background = S.clockVal <= 7 ? '#ff4422' : S.clockVal <= 14 ? 'var(--gold)' : 'var(--green)';
+}
+
+function onTimeout() {
+  inputLocked = true;
+  lockBtns();
+  const q = S.questions[S.qIdx];
+  if (q && q.qtype === 'group') {
+    // For group: treat as wrong answer directly (can't auto-pick)
+    document.getElementById('group-submit-btn').disabled = true;
+    throwFlag(() => processResult(false, 'DELAY OF GAME! ⏱', 'Play clock expired — 10 yards!', 'rb-delay'));
+  } else {
+    throwFlag(() => processResult(false, 'DELAY OF GAME! ⏱', 'Play clock expired — that costs 10 yards!', 'rb-delay'));
+  }
+}
+
+// ==============================
+// GAME FLOW
+// ==============================
+function startGame() {
+  getCtx();
+  S = makeState();
+  refillPATPool();
+  document.getElementById('title').style.display = 'none';
+  document.getElementById('game').style.display = 'flex';
+  document.getElementById('gameover').style.display = 'none';
+  inputLocked = true;
+  gateCloseInstant();   // seal gate before kickoff overlay appears
+  updateHUD();
+  setFieldPos(S.pos, S.fdMarker);
+  doKickoff(() => loadQuestion());
+}
+
+function resetGame() {
+  getCtx();
+  document.getElementById('gameover').style.display = 'none';
+  S = makeState();
+  refillPATPool();
+  inputLocked = true;
+  gateCloseInstant();
+  updateHUD();
+  setFieldPos(S.pos, S.fdMarker);
+  doKickoff(() => loadQuestion());
+}
+
+function getQuarter(idx) {
+  if (idx < 3) return 1;
+  if (idx < 6) return 2;
+  if (idx < 9) return 3;
+  return 4;
+}
+
+const QUARTER_LABELS = {
+  1: 'Q1 · 2-FORM',
+  2: 'Q2 · GROUPING',
+  3: 'Q3 · FULL',
+  4: 'Q4 · CRUNCH TIME',
+};
+
+const TICKER_GROUP = [
+  "THREE formations on film — which two are the SAME?",
+  "Scouting report shows a mismatch — find the pair!",
+  "Coach B pulls up the film: group the matching equations!",
+  "Two of these play the same scheme — which pair?",
+  "Wildcat film study: identify the matching formation duo!",
+];
+
+// ==============================
+// STEEL GATE  — 3-phase: close → swap → open
+// ==============================
+let gateTimer = null;
+
+function gateEl() { return document.getElementById('gate'); }
+
+// Instantly slam closed with no animation (used before overlays appear)
+function gateCloseInstant() {
+  clearTimeout(gateTimer);
+  const g = gateEl();
+  g.classList.remove('animating', 'open');
+  g.style.pointerEvents = 'all';
+}
+
+// Animate closed (used at start of loadQuestion).
+// If the gate is ALREADY closed (e.g. right after kickoff), skips the animation
+// and calls onClosed immediately so content swaps without any visible flash.
+function gateCloseAnimated(onClosed) {
+  clearTimeout(gateTimer);
+  const g = gateEl();
+
+  // If gate is already closed (no .open class), skip animation entirely
+  if (!g.classList.contains('open')) {
+    g.classList.remove('animating');
+    g.style.pointerEvents = 'all';
+    // Still defer the callback one rAF so callers can rely on async behaviour
+    requestAnimationFrame(() => { if (onClosed) onClosed(); });
+    return;
+  }
+
+  // Gate is open → animate it shut
+  g.classList.remove('animating');
+  g.style.pointerEvents = 'all';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      g.classList.add('animating');   // enable transition
+      g.classList.remove('open');     // trigger slide-closed
+      spawnGateSmoke('close');
+      gateTimer = setTimeout(() => {
+        if (onClosed) onClosed();
+      }, 520);
+    });
+  });
+}
+
+// Animate open, call onOpen when fully open
+function gateOpenAnimated(onOpen) {
+  clearTimeout(gateTimer);
+  const g = gateEl();
+  // Panels must already be closed; just add open with animation
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      g.classList.add('animating', 'open');
+      g.style.pointerEvents = 'none';
+      spawnGateSmoke('open');
+      gateTimer = setTimeout(() => {
+        // Remove animating so future instant-close won't transition
+        g.classList.remove('animating');
+        if (onOpen) onOpen();
+      }, 560);
+    });
+  });
+}
+
+// ==============================
+// GATE SMOKE
+// ==============================
+function spawnGateSmoke(phase) {
+  const container = document.getElementById('gate-smoke');
+  if (!container) return;
+
+  const w = container.offsetWidth || 600;
+  const h = container.offsetHeight || 200;
+  const cx = w / 2;   // smoke originates from the seam (center)
+
+  const count = 14;
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const puff = document.createElement('div');
+      puff.className = 'smoke-puff';
+
+      // Spread along vertical seam, slightly randomised
+      const originX = cx + (Math.random() - 0.5) * 28;
+      const originY = h * (0.15 + Math.random() * 0.7);
+
+      // Drift outward left or right depending on panel direction
+      const side   = i % 2 === 0 ? -1 : 1;
+      const drift  = phase === 'close'
+        ? side * (30 + Math.random() * 60)   // close: puffs spread out
+        : side * (20 + Math.random() * 50);  // open: puffs blow in
+
+      const driftY = (Math.random() - 0.5) * 40;
+      const size   = 28 + Math.random() * 38;
+      const dur    = 0.7 + Math.random() * 0.6;
+
+      // Icy blue-white colour
+      const opacity = 0.12 + Math.random() * 0.16;
+      const col = `rgba(${180 + Math.random()*60}, ${220 + Math.random()*35}, 255, ${opacity})`;
+
+      puff.style.cssText = `
+        left: ${originX}px;
+        top:  ${originY}px;
+        width: ${size}px;
+        height: ${size}px;
+        background: ${col};
+        --sdx: ${drift}px;
+        --sdy: ${driftY}px;
+        animation-duration: ${dur}s;
+        animation-delay: ${Math.random() * 0.12}s;
+      `;
+
+      container.appendChild(puff);
+      setTimeout(() => puff.remove(), (dur + 0.15) * 1000);
+    }, i * 28);
+  }
+}
+
+function loadQuestion() {
+  if (S.qIdx >= S.questions.length) { endGame(); return; }
+  const q   = S.questions[S.qIdx];
+  const n   = S.qIdx + 1;
+  const tot = S.questions.length;
+  const qtr = getQuarter(S.qIdx);
+
+  // Update HUD labels before gate animation (they're outside the gate)
+  document.getElementById('hud-playnum').textContent  = `PLAY ${n} OF ${tot}`;
+  document.getElementById('play-count').textContent   = `PLAY ${n} OF ${tot}`;
+  document.getElementById('hud-quarter').textContent  = QUARTER_LABELS[qtr] || '';
+  document.getElementById('prog-fill').style.width    = ((n / tot) * 100) + '%';
+
+  // Phase 1: Animate gate CLOSED — content swaps happen while it's shut
+  gateCloseAnimated(() => {
+    // Phase 2: Gate is fully closed — safe to swap content underneath
+    if (q.qtype === 'group') {
+      document.getElementById('eq-card').style.display        = 'none';
+      document.getElementById('plays').style.display          = 'none';
+      document.getElementById('group-eqs').classList.add('active');
+      document.getElementById('group-submit-row').classList.add('active');
+      document.getElementById('group-tap-cue').classList.add('active');
+      // Ensure popup is reset (hidden) at question start
+      const popup = document.getElementById('group-confirm-popup');
+      if (popup) popup.classList.remove('popped','hidden-after');
+
+      document.getElementById('geq-a').innerHTML = q.eqs[0];
+      document.getElementById('geq-b').innerHTML = q.eqs[1];
+      document.getElementById('geq-c').innerHTML = q.eqs[2];
+
+      resetGroupSelection();
+
+      document.querySelector('.pa-situation').textContent = 'WHICH TWO EQUATIONS SHARE THE SAME FORM?';
+      setTicker(rnd(TICKER_GROUP));
+
+    } else {
+      document.getElementById('eq-card').style.display        = '';
+      document.getElementById('plays').style.display          = '';
+      document.getElementById('group-eqs').classList.remove('active');
+      document.getElementById('group-submit-row').classList.remove('active');
+      document.getElementById('group-tap-cue').classList.remove('active');
+
+      document.getElementById('eq-display').innerHTML = q.eq;
+
+      const btnOth = document.getElementById('btn-oth');
+      btnOth.style.display = (q.qtype === 'full') ? '' : 'none';
+
+      document.getElementById('plays').style.gridTemplateColumns =
+        (q.qtype === 'two') ? '1fr 1fr' : '';
+
+      unlockBtns();
+      clearBtnFlash();
+      document.querySelector('.pa-situation').textContent = 'IDENTIFY THE FORMATION — CALL YOUR COVERAGE';
+      setTicker(rnd([
+        "Wildcats break the huddle... identify that formation!",
+        "Coach Burwinkel signals in the play... what form do you see?",
+        "Clock is ticking — read the equation and call the play!",
+        "The defense MUST identify this formation before the snap!",
+        "Math IQ on full display right here... what's the formation?",
+        "Pressure's on! Call the right coverage or give up yards!",
+      ]));
+    }
+
+    resetClockBar();
+    startClock();
+
+    // Phase 3: Animate gate OPEN — input unlocked only after fully open
+    gateOpenAnimated(() => { inputLocked = false; });
+  });
+}
+
+function answer(type) {
+  if (inputLocked) return;
+  const q = S.questions[S.qIdx];
+  if (q.qtype === 'group') return; // group answers handled by answerGroup
+  inputLocked = true;
+  stopClock();
+  lockBtns();
+
+  const correct = q.ans === type;
+  const btnMap = { standard: 'btn-std', factored: 'btn-fac', other: 'btn-oth' };
+
+  document.getElementById(btnMap[type]).classList.add(correct ? 'flash-correct' : 'flash-wrong');
+  if (!correct) {
+    setTimeout(() => {
+      document.getElementById(btnMap[q.ans]).classList.add('reveal-correct');
+    }, 260);
+  }
+
+  if (correct) {
+    S.correct++;
+    S.correctByQtr[getQuarter(S.qIdx) - 1]++;
+    sndCorrect(); processResult(true);
+  } else { throwFlag(() => processResult(false)); }
+}
+
+// ==============================
+// GROUPING QUESTION — select & submit
+// ==============================
+let groupSelected = []; // array of selected indices (0, 1, 2)
+
+function resetGroupSelection() {
+  groupSelected = [];
+  [0,1,2].forEach(i => {
+    const card = document.getElementById(`geq-card-${i}`);
+    if (card) card.classList.remove('selected','locked','reveal-correct','reveal-wrong');
+  });
+  const hint = document.getElementById('group-hint');
+  if (hint) { hint.textContent = 'Click two equations that share the same form'; hint.classList.remove('ready'); }
+  const popup = document.getElementById('group-confirm-popup');
+  if (popup) { popup.classList.remove('popped','hidden-after'); }
+}
+
+function toggleGeqSelect(idx) {
+  if (inputLocked) return;
+  const card = document.getElementById(`geq-card-${idx}`);
+  if (!card || card.classList.contains('locked')) return;
+
+  const pos = groupSelected.indexOf(idx);
+  if (pos >= 0) {
+    // Deselect
+    groupSelected.splice(pos, 1);
+    card.classList.remove('selected');
+  } else {
+    if (groupSelected.length >= 2) return; // max 2
+    groupSelected.push(idx);
+    card.classList.add('selected');
+    // Dismiss tap-cue once the student has made their first selection
+    document.getElementById('group-tap-cue').classList.remove('active');
+  }
+
+  const hint   = document.getElementById('group-hint');
+  const popup  = document.getElementById('group-confirm-popup');
+  const ready  = groupSelected.length === 2;
+
+  if (ready) {
+    hint.textContent = '✓ Two selected — confirm below!';
+    hint.classList.add('ready');
+    popup.classList.remove('hidden-after');
+    popup.classList.add('popped');
+  } else if (groupSelected.length === 1) {
+    hint.textContent = 'Good — now tap one more equation';
+    hint.classList.remove('ready');
+    popup.classList.remove('popped');
+  } else {
+    hint.textContent = 'Click two equations that share the same form';
+    hint.classList.remove('ready');
+    popup.classList.remove('popped');
+  }
+}
+
+function submitGroupAnswer() {
+  if (inputLocked || groupSelected.length !== 2) return;
+  inputLocked = true;
+  stopClock();
+
+  // Hide the confirm popup immediately
+  const popup = document.getElementById('group-confirm-popup');
+  if (popup) popup.classList.add('hidden-after');
+
+  // Lock all cards
+  [0,1,2].forEach(i => {
+    const c = document.getElementById(`geq-card-${i}`);
+    if (c) c.classList.add('locked');
+  });
+
+  const q = S.questions[S.qIdx];
+  // Build the pair key from sorted selected indices
+  const pairKey = groupSelected.slice().sort().map(i => 'ABC'[i]).join('');
+  const correct = pairKey === q.ans;
+
+  // Get which indices are the correct pair
+  const correctPairIndices = q.ans.split('').map(ch => 'ABC'.indexOf(ch));
+
+  // Reveal correct/wrong after a brief moment
+  setTimeout(() => {
+    [0,1,2].forEach(i => {
+      const card = document.getElementById(`geq-card-${i}`);
+      if (!card) return;
+      const isCorrectCard = correctPairIndices.includes(i);
+      const isSelected    = groupSelected.includes(i);
+
+      if (isCorrectCard) {
+        card.classList.remove('selected');
+        card.classList.add('reveal-correct');
+      } else if (isSelected) {
+        card.classList.remove('selected');
+        card.classList.add('reveal-wrong');
+      }
+    });
+  }, 120);
+
+  if (correct) {
+    S.correct++;
+    S.correctByQtr[getQuarter(S.qIdx) - 1]++;
+    sndCorrect();
+    processResult(true);
+  } else {
+    throwFlag(() => processResult(false));
+  }
+}
+
+function answerGroup(pair) {
+  // Legacy no-op (old buttons removed, keep to avoid reference errors)
+}
+
+function processResult(correct, overrideMain, overrideSub, overrideClass) {
+  const YARD_GAIN = 15;
+  const YARD_LOSS = 10;
+  const ordinals = ['', '1ST', '2ND', '3RD', '4TH'];
+
+  if (correct) {
+    const oldPos = S.pos;
+    S.pos = Math.min(S.pos + YARD_GAIN, 105);
+
+    animateBall(oldPos, Math.min(S.pos, 100));
+
+    if (S.pos >= 100) {
+      // TOUCHDOWN — score 6, then PAT choice
+      S.wcPts += 6;
+      S.pos = 100;
+      updateHUD();
+      setTicker(rnd(COMMENTARY_TD));
+      sndBigCheer();
+      setTimeout(() => {
+        showResult('TOUCHDOWN! 🏈', 'WILDCATS SCORE — 6 POINTS! EXTRA POINT NEXT...', 'rb-td');
+        spawnConfetti();
+        setTimeout(() => {
+          hideResult();
+          // Show PAT choice, then resume field + next question
+          showPATChoice(() => {
+            S.pos = 20; S.fdMarker = 30; S.down = 1;
+            setFieldPos(S.pos, S.fdMarker);
+            updateHUD();
+            sndLongWhistle();
+            nextQuestion();
+          });
+        }, 2200);
+      }, 700);
+
+    } else {
+      // Check first down
+      const gotFD = S.pos >= S.fdMarker;
+      if (gotFD) { S.fdMarker = S.pos + 10; S.down = 1; }
+      updateHUD();
+      setFieldPos(S.pos, S.fdMarker);
+      setTicker(rnd(COMMENTARY_CORRECT));
+      setTimeout(() => {
+        if (gotFD) sndCrowdCheer(0.45, 1.4);
+        showResult(
+          gotFD ? 'FIRST DOWN! 🔥' : `+${YARD_GAIN} YARDS!`,
+          gotFD ? 'THE WILDCATS KEEP DRIVING!' : `Gain of ${YARD_GAIN} — keep the drive alive!`,
+          'rb-firstdown'
+        );
+        setTimeout(() => { hideResult(); nextQuestion(); }, 1600);
+      }, 420);
+    }
+
+  } else {
+    // WRONG
+    const oldPos = S.pos;
+    S.pos = Math.max(S.pos - YARD_LOSS, 0);
+    S.down++;
+
+    animateBall(oldPos, S.pos);
+
+    if (S.down > 4 || S.pos <= 0) {
+      // TURNOVER
+      S.algPts += 7;
+      updateHUD();
+      setTicker(rnd(COMMENTARY_TURNOVER));
+      sndCrowdBoo();
+      setTimeout(() => sndLongWhistle(), 400);
+      setTimeout(() => {
+        showResult(overrideMain || 'TURNOVER! 💀', overrideSub || 'ALGEBRA DEF. SCORES 7 POINTS!', overrideClass || 'rb-turnover');
+        setTimeout(() => {
+          hideResult();
+          S.pos = 20; S.fdMarker = 30; S.down = 1;
+          setFieldPos(S.pos, S.fdMarker);
+          updateHUD();
+          nextQuestion();
+        }, 2600);
+      }, 600);
+
+    } else {
+      updateHUD();
+      setFieldPos(S.pos, S.fdMarker);
+      setTicker(rnd(COMMENTARY_WRONG));
+      const ytg = S.fdMarker - S.pos;
+      const dangerText = S.down === 4 ? '⚠️ 4TH DOWN — DO NOT GET IT WRONG!' : `${ordinals[S.down]} & ${ytg}`;
+      setTimeout(() => {
+        showResult(
+          overrideMain || 'INCOMPLETE! ❌',
+          overrideSub || dangerText,
+          overrideClass || 'rb-wrong'
+        );
+        setTimeout(() => { hideResult(); nextQuestion(); }, 1700);
+      }, 420);
+    }
+  }
+}
+
+// Central sequential scheduler — every path through nextQuestion
+// guarantees: result hidden → inputLocked=true → transition (if any) → loadQuestion
+function nextQuestion() {
+  S.qIdx++;
+  clearBtnFlash();
+  inputLocked = true;   // lock BEFORE any async transition; loadQuestion will unlock
+
+  if (S.qIdx >= S.questions.length) {
+    endGame();
+    return;
+  }
+
+  // Q1 → Q2 (after idx 2 → now at idx 3)
+  if (S.qIdx === 3 && !S.qtrTransDone[0]) {
+    S.qtrTransDone[0] = true;
+    // Small breath after result overlay clears before transition fires
+    setTimeout(() => doQuarterTransition(2, () => loadQuestion()), 120);
+    return;
+  }
+
+  // Q2 → Halftime (after idx 5 → now at idx 6)
+  if (S.qIdx === 6 && !S.haltimeDone) {
+    S.haltimeDone = true;
+    setTimeout(() => doHalftime(() => loadQuestion()), 120);
+    return;
+  }
+
+  // Q3 → Q4 (after idx 8 → now at idx 9)
+  if (S.qIdx === 9 && !S.qtrTransDone[2]) {
+    S.qtrTransDone[2] = true;
+    setTimeout(() => doQuarterTransition(4, () => loadQuestion()), 120);
+    return;
+  }
+
+  loadQuestion();
+}
+
+// ==============================
+// QUARTER TRANSITION
+// ==============================
+const QTR_DATA = {
+  2: {
+    end:       'END OF 1ST QUARTER',
+    num:       '2ND',
+    mode:      'QUARTER',
+    modeColor: 'var(--gold)',
+    desc:      'GROUPING CHALLENGE — three equations, find the matching pair',
+    dots:      ['done', 'active', '', ''],
+  },
+  3: {
+    end:       'END OF 2ND HALF — Q3 BEGINS',
+    num:       '3RD',
+    mode:      'QUARTER',
+    modeColor: 'var(--red-bright)',
+    desc:      'FULL MODE — Standard, Factored, AND Something Else are live',
+    dots:      ['done', 'done', 'active', ''],
+  },
+  4: {
+    end:       'END OF 3RD QUARTER',
+    num:       '4TH',
+    mode:      'QUARTER — CRUNCH TIME',
+    modeColor: '#ff9800',
+    desc:      'ALL THREE FORMS · Last 3 plays · Leave it all on the field',
+    dots:      ['done', 'done', 'done', 'active'],
+  },
+};
+
+function doQuarterTransition(toQtr, callback) {
+  gateCloseInstant();   // seal game screen while transition overlay is visible
+
+  const d  = QTR_DATA[toQtr];
+  const el = document.getElementById('qtr-screen');
+
+  document.getElementById('qs-end').textContent  = d.end;
+  document.getElementById('qs-num').textContent  = d.num;
+  document.getElementById('qs-mode').textContent = d.mode;
+  document.getElementById('qs-mode').style.color = d.modeColor;
+  document.getElementById('qs-desc').textContent = d.desc;
+
+  const dotIds = ['qd-1','qd-2','qd-3','qd-4'];
+  dotIds.forEach((id, i) => {
+    document.getElementById(id).className = 'qs-dot ' + (d.dots[i] || '');
+  });
+
+  el.classList.remove('show');
+  el.style.opacity = '1';
+  el.style.transition = '';
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      el.classList.add('show');
+      setTimeout(() => sndCrowdCheer(0.22, 1.1), 350);
+
+      setTimeout(() => {
+        el.style.transition = 'opacity 0.5s ease';
+        el.style.opacity = '0';
+        setTimeout(() => {
+          el.classList.remove('show');
+          el.style.opacity = '';
+          el.style.transition = '';
+          if (callback) callback();
+        }, 520);
+      }, 3400);
+    });
+  });
+}
+
+// ==============================
+// HALFTIME — full stats breakdown
+// ==============================
+const GRADE_DATA = {
+  A: { color: '#00c853', title: 'ELITE PERFORMANCE', subs: [
+    'Coach B might actually shed a tear.', 'Math is literally afraid of you.',
+    'Even the TI-84 is impressed.', 'Perfect execution. Burwinkel 2K legend.'
+  ]},
+  B: { color: var_gold(), title: 'SOLID FIRST HALF', subs: [
+    'Good reads. Clean up those mistakes in Q3.',
+    "You're in the game. Keep the pressure on.",
+    'Coach B nods approvingly from the sideline.',
+  ]},
+  C: { color: '#ff9800', title: 'NEEDS ADJUSTMENT', subs: [
+    'The algebra is talking back. Adjust your coverage.',
+    "Halftime adjustments needed. Coach B's whiteboard awaits.",
+    'Average reps. Come out sharper in Q3.',
+  ]},
+  D: { color: '#ff4422', title: 'ROUGH FIRST HALF', subs: [
+    "It's not ideal. But Q3 is a fresh start.",
+    'The Algebra Defense is feeling confident. Prove them wrong.',
+    "Coach B is drawing new plays. Study up.",
+  ]},
+  F: { color: '#dd2222', title: 'BACK TO BASICS', subs: [
+    "Zero. We're starting from zero. It's fine.",
+    'Coach B has seen worse. ...Actually, he has not.',
+    "These equations aren't going to identify themselves.",
+  ]},
+};
+
+function var_gold() { return '#f7c530'; } // helper since const literal can't use CSS var
+
+function getGrade(correct, total) {
+  const pct = correct / total;
+  if (pct >= 0.85) return 'A';
+  if (pct >= 0.70) return 'B';
+  if (pct >= 0.55) return 'C';
+  if (pct >= 0.35) return 'D';
+  return 'F';
+}
+
+function colorForCount(n, max) {
+  const r = n / max;
+  if (r >= 0.8) return 'good';
+  if (r >= 0.5) return 'ok';
+  return 'bad';
+}
+
+const COACH_QUOTES = [
+  '"Vertex form is a(x−h)² + k. That squared binomial is your tip-off." — Coach B',
+  '"If you see parentheses with a square AND a constant, think Something Else." — Coach B',
+  '"Factored form hands you the roots. Vertex form hands you the peak. Know the difference." — Coach B',
+  '"Standard form means expanded polynomial. No factoring, no vertex. Just ax² + bx + c." — Coach B',
+  '"Something Else is vertex form. Look for (x ± h)² — that\'s your tell." — Coach B',
+];
+
+function doHalftime(callback) {
+  const q1c  = S.correctByQtr[0];
+  const q2c  = S.correctByQtr[1];
+  const half = q1c + q2c;
+  const pct  = Math.round((half / 6) * 100);
+  const grade = getGrade(half, 6);
+  const gd   = GRADE_DATA[grade];
+
+  document.getElementById('ht-wc').textContent  = S.wcPts;
+  document.getElementById('ht-alg').textContent = S.algPts;
+
+  // Q1 stat
+  const q1el = document.getElementById('ht-q1-stat');
+  q1el.textContent = `${q1c}/3`;
+  q1el.className = 'ht-stat-num ' + colorForCount(q1c, 3);
+
+  // Q2 stat
+  const q2el = document.getElementById('ht-q2-stat');
+  q2el.textContent = `${q2c}/3`;
+  q2el.className = 'ht-stat-num ' + colorForCount(q2c, 3);
+
+  // Half total
+  const htEl = document.getElementById('ht-total-stat');
+  htEl.textContent = `${half}/6`;
+  htEl.className = 'ht-stat-num ' + colorForCount(half, 6);
+
+  // Accuracy
+  const pctEl = document.getElementById('ht-pct-stat');
+  pctEl.textContent = `${pct}%`;
+  pctEl.className = 'ht-stat-num ' + colorForCount(half, 6);
+
+  // Grade
+  const gradeEl = document.getElementById('ht-grade');
+  gradeEl.textContent = grade;
+  gradeEl.style.color = gd.color;
+  document.getElementById('ht-grade-title').textContent = gd.title;
+  document.getElementById('ht-grade-sub').textContent   = rnd(gd.subs);
+
+  // Coach quote
+  document.getElementById('ht-quote').textContent = rnd(COACH_QUOTES);
+
+  const el = document.getElementById('halftime');
+  gateCloseInstant();   // seal game screen before halftime overlay appears
+  el.classList.add('show');
+
+  sndCrowdCheer(0.4, 2.4);
+  if (half >= 5) setTimeout(() => spawnConfetti(), 600);
+
+  setTimeout(() => {
+    el.style.transition = 'opacity 0.7s ease';
+    el.style.opacity = '0';
+    setTimeout(() => {
+      el.classList.remove('show');
+      el.style.opacity = '';
+      el.style.transition = '';
+      // Brief black-screen breath before Q3 transition fires
+      setTimeout(() => doQuarterTransition(3, () => doKickoff(callback)), 400);
+    }, 720);
+  }, 7500);
+}
+
+// ==============================
+// BALL ANIMATION
+// ==============================
+function animateBall(from, to) {
+  if (animReq) cancelAnimationFrame(animReq);
+  const start = performance.now();
+  const dur = 550;
+  function step(now) {
+    const t = Math.min((now - start) / dur, 1);
+    const e = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+    const x = yardToX(from + (to - from) * e);
+    document.getElementById('ball').setAttribute('transform', `translate(${x}, 65)`);
+    if (t < 1) animReq = requestAnimationFrame(step);
+  }
+  animReq = requestAnimationFrame(step);
+}
+
+// ==============================
+// HUD / UI HELPERS
+// ==============================
+function updateHUD() {
+  document.getElementById('wc-score').textContent  = S.wcPts;
+  document.getElementById('alg-score').textContent = S.algPts;
+  const ordinals = ['', '1ST', '2ND', '3RD', '4TH'];
+  const d = Math.min(S.down, 4);
+  const ytg = Math.max(S.fdMarker - S.pos, 1);
+  document.getElementById('hud-dd').innerHTML = `${ordinals[d]} &amp; ${ytg}`;
+}
+
+function showResult(main, sub, cls) {
+  const b = document.getElementById('result-banner');
+  b.textContent = main;
+  b.className = 'result-banner ' + cls;
+  document.getElementById('result-sub').textContent = sub;
+  document.getElementById('result-overlay').classList.add('show');
+}
+
+function hideResult() {
+  document.getElementById('result-overlay').classList.remove('show');
+}
+
+function setTicker(text) {
+  document.getElementById('tick-text').textContent = text;
+}
+
+function lockBtns() {
+  ['btn-std','btn-fac','btn-oth'].forEach(id => document.getElementById(id).disabled = true);
+}
+function unlockBtns() {
+  ['btn-std','btn-fac','btn-oth'].forEach(id => document.getElementById(id).disabled = false);
+}
+function clearBtnFlash() {
+  ['btn-std','btn-fac','btn-oth'].forEach(id => {
+    document.getElementById(id).classList.remove('flash-correct','flash-wrong','reveal-correct');
+  });
+  // Also reset grouping cards if they exist
+  resetGroupSelection();
+}
+
+// ==============================
+// CONFETTI
+// ==============================
+function spawnConfetti() {
+  const colors = ['#cc0000','#f7c530','#ffffff','#ff4444','#ffdd44','#ff6633'];
+  for (let i = 0; i < 40; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'conf';
+      const size = 6 + Math.random() * 9;
+      el.style.cssText = `
+        left:${Math.random()*100}vw; top:-20px;
+        width:${size}px; height:${size}px;
+        background:${rnd(colors)};
+        border-radius:${Math.random()>0.4 ? '50%' : '2px'};
+        animation-duration:${1.4+Math.random()*1.8}s;
+        animation-delay:${Math.random()*0.4}s;
+        opacity:1;
+      `;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }, i * 35);
+  }
+}
+
+// ==============================
+// GAME OVER
+// ==============================
+function endGame() {
+  stopClock();
+  S.phase = 'over';
+
+  sndLongWhistle();
+  setTimeout(() => {
+    if (S.wcPts >= S.algPts) { sndBigCheer(); spawnConfetti(); }
+    else sndCrowdBoo();
+  }, 500);
+
+  document.getElementById('go-wc').textContent  = S.wcPts;
+  document.getElementById('go-alg').textContent = S.algPts;
+
+  const res = document.getElementById('go-result');
+  if (S.wcPts > S.algPts) {
+    res.textContent = '🏆 WILDCATS WIN! 🏆';
+    res.className = 'go-result win';
+  } else if (S.algPts > S.wcPts) {
+    res.textContent = '📚 ALGEBRA WINS — STUDY HARDER!';
+    res.className = 'go-result loss';
+  } else {
+    res.textContent = "IT'S A TIE — OVERTIME REVIEW SESSION!";
+    res.className = 'go-result tie';
+  }
+
+  const total = S.questions.length;
+  const pct   = Math.round((S.correct / total) * 100);
+  const qc    = S.correctByQtr;
+  document.getElementById('go-stats').textContent =
+    `${S.correct}/${total} correct · ${pct}% accuracy  |  Q1: ${qc[0]}/3  Q2: ${qc[1]}/3  Q3: ${qc[2]}/3  Q4: ${qc[3]}/3`;
+  document.getElementById('go-joke').textContent = rnd(JOKES);
+
+  document.getElementById('gameover').style.display = 'flex';
+}
+
+// ==============================
+// KEYBOARD
+// ==============================
+document.addEventListener('keydown', e => {
+  if (document.getElementById('title').style.display !== 'none') { startGame(); return; }
+  if (S.phase === 'over') return;
+  const k = e.key.toLowerCase();
+  const q = S.questions && S.questions[S.qIdx];
+  if (!q) return;
+
+  if (q.qtype === 'group') {
+    if (k === 'a' || k === '1') toggleGeqSelect(0);
+    else if (k === 'b' || k === '2') toggleGeqSelect(1);
+    else if (k === 'c' || k === '3') toggleGeqSelect(2);
+    else if (k === 'enter' || k === ' ') submitGroupAnswer();
+  } else {
+    if (k === 'a' || k === '1') answer('standard');
+    else if (k === 'b' || k === '2') answer('factored');
+    else if (k === 'c' || k === '3') answer('other');
+  }
+});
+
+// ==============================
+// TITLE STARS
+// ==============================
+(function() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 70; i++) {
+    const s = document.createElement('div');
+    s.className = 't-star';
+    const sz = 1 + Math.random() * 2;
+    s.style.cssText = `
+      left:${Math.random()*100}%; top:${Math.random()*70}%;
+      width:${sz}px; height:${sz}px;
+      animation-delay:${Math.random()*3}s;
+      animation-duration:${2+Math.random()*3}s;
+    `;
+    container.appendChild(s);
+  }
+})();
+</script>
+</body>
+</html>
